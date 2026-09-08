@@ -1,26 +1,39 @@
 package devblock.tech.lotus_connect_android
 
 import android.os.Bundle
+import android.widget.Button
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +44,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.rememberNavController
+import devblock.tech.lotus_connect_android.feature.chat.presentation.ChatScreen
+import devblock.tech.lotus_connect_android.feature.contacts.presentation.ContactsScreen
+import devblock.tech.lotus_connect_android.feature.home.presentation.HomeScreen
+import devblock.tech.lotus_connect_android.feature.settings.presentation.SettingsScreen
 import devblock.tech.lotus_connect_android.ui.theme.LotusConnectTheme
 
 class MainActivity : ComponentActivity() {
@@ -39,7 +57,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             LotusConnectTheme {
-                MainScreen()
+                AppNavHost()
             }
         }
     }
@@ -96,66 +114,9 @@ fun MainScreen() {
             BottomNavItem.Home.route -> HomeScreen(Modifier.padding(innerPadding))
             BottomNavItem.ChatScreen.route -> ChatScreen(Modifier.padding(innerPadding))
             BottomNavItem.ContactsScreen.route -> ContactsScreen(Modifier.padding(innerPadding))
-            BottomNavItem.Settings.route -> SettingsScreen(Modifier.padding(innerPadding))
+            BottomNavItem.Settings.route -> SettingsScreen(
+                Modifier.padding(innerPadding),
+            )
         }
-    }
-}
-
-@Composable fun HomeScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Home screen",
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-@Composable fun ChatScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Chat screen",
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-@Composable fun ContactsScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Contacts screen",
-            style = MaterialTheme.typography.headlineMedium
-        )
-    }
-}
-@Composable fun SettingsScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Settings screen",
-            style = MaterialTheme.typography.headlineMedium
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    LotusConnectTheme {
-        MainScreen()
     }
 }
