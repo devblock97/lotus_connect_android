@@ -4,11 +4,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthScreen
+import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthViewModel
 import devblock.tech.lotus_connect_android.feature.chat.presentation.ChatScreen
 import devblock.tech.lotus_connect_android.feature.contacts.presentation.ContactsScreen
 import devblock.tech.lotus_connect_android.feature.home.presentation.HomeScreen
@@ -45,12 +47,14 @@ fun AppNavHost() {
             modifier = androidx.compose.ui.Modifier.padding(innerPadding)
         ) {
             composable(Routes.AUTH) {
+                val authViewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory)
                 AuthScreen(
                     onAuthSuccess = {
                         navController.navigate(Routes.HOME) {
                             popUpTo(Routes.AUTH) { inclusive = true }
                         }
-                    }
+                    },
+                    viewModel = authViewModel
                 )
             }
             composable(Routes.HOME) {
