@@ -27,6 +27,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,8 +44,17 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun AuthScreen(
-    onAuthSuccess: () -> Unit = {}
+    onAuthSuccess: () -> Unit = {},
+    viewModel: AuthViewModel
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            onAuthSuccess()
+        }
+    }
+
     var isSignIn by remember { mutableStateOf(true) }
 
     var name by remember { mutableStateOf("") }
@@ -52,7 +63,7 @@ fun AuthScreen(
     var confirmPassword by remember { mutableStateOf("") }
 
     var passwordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisibile by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
@@ -137,13 +148,13 @@ fun AuthScreen(
                     onValueChange = { confirmPassword = it },
                     label = { Text("Confirm Password")},
                     singleLine = true,
-                    visualTransformation = if (confirmPasswordVisibile) VisualTransformation.None else PasswordVisualTransformation(),
+                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     trailingIcon = {
-                        IconButton(onClick = { confirmPasswordVisibile = !confirmPasswordVisibile}) {
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible}) {
                             Icon(
-                                imageVector = if (confirmPasswordVisibile) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                                contentDescription = if (confirmPasswordVisibile) "Hide password" else "Show password"
+                                imageVector = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password"
                             )
                         }
                     },
@@ -176,8 +187,8 @@ fun AuthScreen(
 
             // Submit button
             Button(
-                onClick = { validateAndSubmit() },
-                enabled = !isLoading,
+                onClick = { viewModel.login(email, password) },
+                enabled = !uiState.isLoading && email.isNotBlank() && password.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)

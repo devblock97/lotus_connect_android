@@ -97,26 +97,3 @@ fun AppBottomNavBar(
         }
     }
 }
-
-@Composable
-fun MainScreen() {
-    var selectedRoute by remember { mutableStateOf(BottomNavItem.Home.route) }
-
-    Scaffold(
-        bottomBar = {
-            AppBottomNavBar(
-                selectedRoute = selectedRoute,
-                onItemSelected = { selectedRoute = it }
-            )
-        }
-    ) { innerPadding ->
-        when(selectedRoute) {
-            BottomNavItem.Home.route -> HomeScreen(Modifier.padding(innerPadding))
-            BottomNavItem.ChatScreen.route -> ChatScreen(Modifier.padding(innerPadding))
-            BottomNavItem.ContactsScreen.route -> ContactsScreen(Modifier.padding(innerPadding))
-            BottomNavItem.Settings.route -> SettingsScreen(
-                Modifier.padding(innerPadding),
-            )
-        }
-    }
-}
