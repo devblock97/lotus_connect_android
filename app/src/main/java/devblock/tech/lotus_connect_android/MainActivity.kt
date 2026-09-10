@@ -1,7 +1,6 @@
 package devblock.tech.lotus_connect_android
 
 import android.os.Bundle
-import android.widget.Button
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -22,6 +21,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -45,6 +45,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
+import devblock.tech.lotus_connect_android.core.network.RetrofitClient
+import devblock.tech.lotus_connect_android.feature.auth.data.local.AuthLocalDataSource
 import devblock.tech.lotus_connect_android.feature.chat.presentation.ChatScreen
 import devblock.tech.lotus_connect_android.feature.contacts.presentation.ContactsScreen
 import devblock.tech.lotus_connect_android.feature.home.presentation.HomeScreen
@@ -54,6 +56,10 @@ import devblock.tech.lotus_connect_android.ui.theme.LotusConnectTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val localDataSource = AuthLocalDataSource(applicationContext)
+        RetrofitClient.initialize {
+            localDataSource.getAccessToken()
+        }
         enableEdgeToEdge()
         setContent {
             LotusConnectTheme {
@@ -68,15 +74,17 @@ sealed class BottomNavItem(
     val title: String,
     val icon: ImageVector
 ) {
-    object  Home: BottomNavItem("home", "Home", Icons.Filled.Home)
-    object ChatScreen: BottomNavItem("chat", "Chat", Icons.Filled.ChatBubbleOutline)
-    object ContactsScreen: BottomNavItem("contacts", "Contacts", Icons.Filled.Person)
-    object Settings: BottomNavItem("settings", "Settings", Icons.Filled.Settings)
+    object Home: BottomNavItem(Routes.HOME, "Home", Icons.Filled.Home)
+    object ChatScreen: BottomNavItem(Routes.CHAT, "Chat", Icons.Filled.ChatBubbleOutline)
+    object NotificationsScreen: BottomNavItem(Routes.NOTIFICATIONS, "Alerts", Icons.Filled.NotificationsNone)
+    object ContactsScreen: BottomNavItem(Routes.CONTACTS, "Contacts", Icons.Filled.Person)
+    object Settings: BottomNavItem(Routes.SETTINGS, "Settings", Icons.Filled.Settings)
 }
 
 val bottomNavItems = listOf(
     BottomNavItem.Home,
     BottomNavItem.ChatScreen,
+    BottomNavItem.NotificationsScreen,
     BottomNavItem.ContactsScreen,
     BottomNavItem.Settings,
 )

@@ -4,7 +4,6 @@ import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.AuthResp
 import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.LoginRequest
 import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.LogoutRequest
 import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.RegisterRequest
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.RegisterResponseDto
 import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.UserDto
 
 class AuthRemoteDataSource(

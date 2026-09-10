@@ -1,6 +1,6 @@
 package devblock.tech.lotus_connect_android.feature.auth.presentation
 
-import devblock.tech.lotus_connect_android.feature.auth.domain.model.User
+import devblock.tech.lotus_connect_android.feature.auth.domain.entities.User
 
 data class AuthUiState(
     val isCheckingSession: Boolean = true,

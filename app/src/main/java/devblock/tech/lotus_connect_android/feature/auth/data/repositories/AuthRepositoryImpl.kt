@@ -4,8 +4,7 @@ import devblock.tech.lotus_connect_android.feature.auth.data.local.AuthLocalData
 import devblock.tech.lotus_connect_android.feature.auth.data.remote.AuthRemoteDataSource
 import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.LoginRequest
 import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.RegisterRequest
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.UserDto
-import devblock.tech.lotus_connect_android.feature.auth.domain.model.User
+import devblock.tech.lotus_connect_android.feature.auth.domain.entities.User
 import devblock.tech.lotus_connect_android.feature.auth.domain.repository.AuthRepository
 
 class AuthRepositoryImpl(
