@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import devblock.tech.lotus_connect_android.feature.auth.domain.model.User
+import devblock.tech.lotus_connect_android.feature.auth.domain.entities.User
 import androidx.core.content.edit
 
 class AuthLocalDataSource(context: Context) {

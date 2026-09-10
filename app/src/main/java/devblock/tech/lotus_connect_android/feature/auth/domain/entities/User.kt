@@ -1,4 +1,4 @@
-package devblock.tech.lotus_connect_android.feature.auth.domain.model
+package devblock.tech.lotus_connect_android.feature.auth.domain.entities
 
 data class User(
     val id: String,

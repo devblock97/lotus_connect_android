@@ -1,7 +1,6 @@
 package devblock.tech.lotus_connect_android.feature.auth.domain.repository
 
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.UserDto
-import devblock.tech.lotus_connect_android.feature.auth.domain.model.User
+import devblock.tech.lotus_connect_android.feature.auth.domain.entities.User
 
 interface AuthRepository {
     suspend fun login(

@@ -1,6 +1,6 @@
 package devblock.tech.lotus_connect_android.feature.auth.domain.usecase
 
-import devblock.tech.lotus_connect_android.feature.auth.domain.model.User
+import devblock.tech.lotus_connect_android.feature.auth.domain.entities.User
 import devblock.tech.lotus_connect_android.feature.auth.domain.repository.AuthRepository
 
 data class LoginParam(

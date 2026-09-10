@@ -1,7 +1,7 @@
 package devblock.tech.lotus_connect_android.feature.auth.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
-import devblock.tech.lotus_connect_android.feature.auth.domain.model.User
+import devblock.tech.lotus_connect_android.feature.auth.domain.entities.User
 
 data class LoginRequest(
     @SerializedName("email") val email: String,

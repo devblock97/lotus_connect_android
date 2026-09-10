@@ -20,6 +20,8 @@ import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthViewMod
 import devblock.tech.lotus_connect_android.feature.chat.presentation.ChatScreen
 import devblock.tech.lotus_connect_android.feature.contacts.presentation.ContactsScreen
 import devblock.tech.lotus_connect_android.feature.home.presentation.HomeScreen
+import devblock.tech.lotus_connect_android.feature.notifications.presentation.NotificationsScreen
+import devblock.tech.lotus_connect_android.feature.notifications.presentation.view_model.NotificationViewModel
 import devblock.tech.lotus_connect_android.feature.settings.presentation.SettingsScreen
 
 @Composable
@@ -80,6 +82,16 @@ fun AppNavHost() {
             }
             composable(Routes.CHAT) {
                 ChatScreen()
+            }
+            composable(Routes.NOTIFICATIONS) {
+                val notificationViewModel: NotificationViewModel = viewModel(
+                    factory = NotificationViewModel.Factory
+                )
+                val uiState by notificationViewModel.uiState.collectAsState()
+
+                NotificationsScreen(
+                    viewModel = notificationViewModel
+                )
             }
             composable(Routes.CONTACTS) {
                 ContactsScreen()
