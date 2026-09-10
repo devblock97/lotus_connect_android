@@ -1,6 +1,7 @@
 package devblock.tech.lotus_connect_android.feature.auth.presentation
 
 import android.graphics.drawable.Icon
+import android.util.Patterns
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -41,6 +43,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.RegisterRequest
+import org.intellij.lang.annotations.Pattern
 
 @Composable
 fun AuthScreen(
@@ -57,6 +61,7 @@ fun AuthScreen(
 
     var isSignIn by remember { mutableStateOf(true) }
 
+    var fullName by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -68,8 +73,77 @@ fun AuthScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
 
-    fun validateAndSubmit() {
+    // State variables for field errors
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
+    var nameError by remember { mutableStateOf<String?>(null) }
+    var fullNameError by remember { mutableStateOf<String?>(null) }
 
+    fun validateAndSubmit() {
+        var isValid = true
+        val trimmedEmail = email.trim()
+
+        // Email validation
+        if (trimmedEmail.isEmpty()) {
+            emailError = "Email cannot be empty"
+            isValid = false
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches()) {
+            emailError = "Invalid email format (e.g. user@example.com)"
+            isValid = false
+        } else {
+            emailError = null
+        }
+
+        // Password validation
+        if (password.isEmpty()) {
+            passwordError = "Password cannot be empty"
+            isValid = false
+        } else if (password.length < 6) {
+            passwordError = "Password must be at least 6 characters"
+            isValid = false
+        } else {
+            passwordError = null
+        }
+
+        // Sign up extra validation
+        if (!isSignIn) {
+            if (name.isBlank()) {
+                nameError = "Username cannot be empty"
+                isValid = false
+            } else {
+                nameError = null
+            }
+
+            if (fullName.isBlank()) {
+                fullNameError = "Full name cannot be empty"
+                isValid = false
+            } else {
+                fullNameError = null
+            }
+
+            if (confirmPassword != password) {
+                confirmPasswordError = "Passwords do not match"
+                isValid = false
+            } else {
+                confirmPasswordError = null
+            }
+        }
+
+        // Submit only if valid
+        if (isValid) {
+            if (isSignIn) {
+                viewModel.login(trimmedEmail, password)
+            } else {
+                val params = RegisterRequest(
+                    username = name,
+                    fullName = fullName,
+                    email = email,
+                    password = password
+                )
+                viewModel.register(params)
+            }
+        }
     }
 
     Box(
@@ -100,6 +174,15 @@ fun AuthScreen(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it},
+                    label = { Text("Username") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = fullName,
+                    onValueChange = { fullName = it},
                     label = { Text("Full Name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -110,9 +193,18 @@ fun AuthScreen(
             // Email field
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = {
+                    email = it
+                    if (emailError != null) emailError = null
+                },
                 label = { Text("Email") },
                 singleLine = true,
+                isError = emailError != null,
+                supportingText = {
+                    emailError?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error)
+                    }
+                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                 ),
@@ -124,9 +216,18 @@ fun AuthScreen(
             // Password field
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    if (passwordError != null) passwordError = null
+                },
                 label = { Text("Password") },
                 singleLine = true,
+                isError = passwordError != null,
+                supportingText = {
+                    passwordError?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error)
+                    }
+                },
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
@@ -187,13 +288,13 @@ fun AuthScreen(
 
             // Submit button
             Button(
-                onClick = { viewModel.login(email, password) },
-                enabled = !uiState.isLoading && email.isNotBlank() && password.isNotBlank(),
+                onClick = { validateAndSubmit() },
+                enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
-                if (isLoading) {
+                if (uiState.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         color = MaterialTheme.colorScheme.onPrimary,
@@ -248,6 +349,19 @@ fun AuthScreen(
                 )
             }
         }
+    }
+
+    if (uiState.errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.clearError() },
+            title = { Text("Login Failed") },
+            text = { Text(uiState.errorMessage!!) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.clearError()}) {
+                    Text("OK")
+                }
+            }
+        )
     }
 }
 
