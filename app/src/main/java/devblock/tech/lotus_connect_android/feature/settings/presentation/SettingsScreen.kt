@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
@@ -38,6 +40,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,11 +65,13 @@ fun SettingsScreen(
 
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    val uiState = viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val currentUser = uiState.user
 
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         Text(
@@ -102,12 +107,14 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
-                        "Nguyen Nhut Thong",
+                        text = currentUser?.fullName?.takeIf { it.isNotBlank() }
+                            ?: currentUser?.username
+                            ?: "Guest user",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        "nnthong",
+                        text = currentUser?.username ?: "",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -186,7 +193,10 @@ fun SettingsScreen(
                         .fillMaxWidth()
                         .height(48.dp)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout")
+                    Icon(
+                        Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = "Logout"
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Logout")
                 }

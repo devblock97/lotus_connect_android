@@ -30,6 +30,8 @@ class AuthLocalDataSource(context: Context) {
         }
     }
 
+    fun hasSession(): Boolean = !getAccessToken().isNullOrBlank()
+
     fun getAccessToken(): String? = prefs.getString("access_token", null)
 
     fun getCachedUser(): User? {
