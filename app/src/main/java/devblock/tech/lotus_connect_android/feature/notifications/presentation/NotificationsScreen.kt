@@ -3,6 +3,7 @@ package devblock.tech.lotus_connect_android.feature.notifications.presentation
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,12 +21,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallMissed
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person2
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.VideoCall
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,8 +45,6 @@ import androidx.compose.ui.unit.dp
 import devblock.tech.lotus_connect_android.feature.notifications.domain.entities.NotificationData
 import devblock.tech.lotus_connect_android.feature.notifications.domain.entities.NotificationEntity
 import devblock.tech.lotus_connect_android.feature.notifications.presentation.view_model.NotificationViewModel
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -61,19 +65,60 @@ fun NotificationsScreen(
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
         items(uiState.notifications, key = { it.id }) { notification ->
-            NotificationRow(notification)
+            SwipeableRow(
+                onDelete = { viewModel.deleteNotification(notification.id) },
+            ) {
+                NotificationRow(
+                    notification = notification,
+                    onClick = {
+                        viewModel.readNotification(notification.id)
+                    }
+                )
+            }
         }
+    }
+}
+
+@Composable
+fun SwipeableRow(
+    onDelete: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            when (value) {
+                SwipeToDismissBoxValue.EndToStart -> { onDelete(); true }
+                else -> false
+            }
+        }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            val (color, icon, alignment) = when (dismissState.dismissDirection) {
+                SwipeToDismissBoxValue.StartToEnd -> Triple(Color(0xFF34A853), Icons.Filled.Archive,
+                    Alignment.CenterStart)
+                SwipeToDismissBoxValue.EndToStart -> Triple(MaterialTheme.colorScheme.error, Icons.Filled.Delete,
+                    Alignment.CenterEnd)
+                else -> Triple(Color.Transparent, null, Alignment.Center)
+            }
+        }
+    ) {
+        content()
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun NotificationRow(
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .background(
                 if (!notification.isRead)
                     MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
@@ -100,7 +145,7 @@ private fun NotificationRow(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        Column() {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = notification.title,
                 style = MaterialTheme.typography.titleSmall,
@@ -115,7 +160,20 @@ private fun NotificationRow(
             )
             Spacer(modifier = Modifier.height(4.dp))
         }
+
+        if (!notification.isRead) {
+            Box(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+        }
+
     }
+
+    Spacer(modifier = Modifier.height(4.dp))
 
 }
 

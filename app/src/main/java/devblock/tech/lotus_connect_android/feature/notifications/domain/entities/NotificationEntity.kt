@@ -8,7 +8,7 @@ data class NotificationEntity(
     val title: String,
     val body: String,
     @SerializedName("created_at") val createdAt: String,
-    val isRead: Boolean,
+    @SerializedName("is_read") val isRead: Boolean,
     val data: NotificationData
 )
 
