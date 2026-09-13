@@ -10,6 +10,7 @@ import devblock.tech.lotus_connect_android.feature.notifications.data.repositori
 import devblock.tech.lotus_connect_android.feature.notifications.domain.usecase.DeleteAllNotificationsUseCase
 import devblock.tech.lotus_connect_android.feature.notifications.domain.usecase.DeleteNotificationParam
 import devblock.tech.lotus_connect_android.feature.notifications.domain.usecase.DeleteNotificationUseCase
+import devblock.tech.lotus_connect_android.feature.notifications.domain.usecase.GetNotificationsParam
 import devblock.tech.lotus_connect_android.feature.notifications.domain.usecase.GetNotificationsUseCase
 import devblock.tech.lotus_connect_android.feature.notifications.domain.usecase.ReadAllNotificationsUseCase
 import devblock.tech.lotus_connect_android.feature.notifications.domain.usecase.ReadNotificationParam
@@ -27,16 +28,23 @@ class NotificationViewModel(
     private val deleteNotificationUseCase: DeleteNotificationUseCase,
     private val deleteAllNotificationsUseCase: DeleteAllNotificationsUseCase,
 ) : ViewModel() {
+    private val _uiState = MutableStateFlow(NotificationsUiState())
+    val uiState: StateFlow<NotificationsUiState> = _uiState.asStateFlow()
 
     init {
         getNotifications()
     }
-    private val _uiState = MutableStateFlow(NotificationsUiState())
-    val uiState: StateFlow<NotificationsUiState> = _uiState.asStateFlow()
 
     fun getNotifications() {
+        _uiState.update { state ->
+            state.copy(isLoading = true)
+        }
+
         viewModelScope.launch {
-            val result = getNotificationsUseCase()
+            val result = getNotificationsUseCase(GetNotificationsParam(
+                cursor = null,
+                limit = 10,
+            ))
 
             result.fold(
                 onSuccess = { notifications ->
@@ -44,9 +52,12 @@ class NotificationViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            isLoadingMore = false,
                             notifications = notifications,
                             errorMessage = null,
-                            isSuccess = true
+                            isSuccess = true,
+                            hasMore = notifications.size >= 10,
+                            nextCursor = notifications.lastOrNull()?.id
                         )
                     }
                 },
@@ -60,6 +71,55 @@ class NotificationViewModel(
                     }
                 }
             )
+        }
+    }
+
+    fun loadNextPage() {
+        val current = _uiState.value
+        if (current.isLoadingMore
+            || !current.hasMore
+            || current.isLoading
+            || current.nextCursor == null
+        ) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { state ->
+                state.copy(isLoadingMore = true)
+            }
+
+            try {
+                val response = getNotificationsUseCase(
+                    GetNotificationsParam(cursor = current.nextCursor, limit = 10)
+                )
+                response.fold(
+                    onSuccess = { notifications ->
+                        println("loadNextPage success: got ${notifications.size} items")
+                        _uiState.update { state ->
+                            state.copy(
+                                notifications = state.notifications + notifications,
+                                isLoadingMore = false,
+                                hasMore = notifications.size >= 10,
+                                isLoading = false,
+                                nextCursor = notifications.lastOrNull()?.id ?: state.nextCursor
+                            )
+                        }
+                    },
+                    onFailure = { error ->
+                        println("loadNextPage failure: ${error.message}")
+                        _uiState.update { state ->
+                            state.copy(
+                                isLoadingMore = false,
+                                errorMessage = error.message ?: "Failed to load notifications"
+                            )
+                        }
+                    }
+                )
+            } catch (e: Exception) {
+                println("loadNextPage exception: ${e.message}")
+                _uiState.update { it.copy(isLoadingMore = false, errorMessage = e.message) }
+            }
         }
     }
 
@@ -115,28 +175,25 @@ class NotificationViewModel(
     }
 
     fun deleteNotification(notificationId: String) {
+        val originalList = _uiState.value.notifications
+
+        _uiState.update { state ->
+            state.copy(notifications = state.notifications.filterNot { it.id == notificationId })
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val result = deleteNotificationUseCase(DeleteNotificationParam(notificationId))
 
-            result.fold(
-                onSuccess = {
-                    println("delete notification success")
-                    _uiState.update {
-                        it.copy(isLoading = false, isSuccess = true)
-                    }
-                    getNotifications()
-                },
-                onFailure = { error ->
-                    println("delete notification error")
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = error.message ?: "Failed to delete notification"
-                        )
-                    }
+            result.onFailure { error ->
+                _uiState.update { state ->
+                    state.copy(
+                        notifications = originalList,
+                        isLoading = false,
+                        errorMessage = error.message ?: "Failed to delete notification"
+                    )
                 }
-            )
+            }
         }
     }
 
