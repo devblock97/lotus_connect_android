@@ -20,7 +20,7 @@ import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthViewMod
 import devblock.tech.lotus_connect_android.feature.chat.presentation.ChatScreen
 import devblock.tech.lotus_connect_android.feature.contacts.presentation.ContactsScreen
 import devblock.tech.lotus_connect_android.feature.home.presentation.HomeScreen
-import devblock.tech.lotus_connect_android.feature.notifications.presentation.NotificationsScreen
+import devblock.tech.lotus_connect_android.feature.notifications.presentation.view.NotificationsScreen
 import devblock.tech.lotus_connect_android.feature.notifications.presentation.view_model.NotificationViewModel
 import devblock.tech.lotus_connect_android.feature.settings.presentation.SettingsScreen
 

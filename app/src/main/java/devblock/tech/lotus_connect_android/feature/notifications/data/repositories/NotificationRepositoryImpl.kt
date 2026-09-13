@@ -9,9 +9,9 @@ class NotificationRepositoryImpl(
     private val remoteDataSource: NotificationRemoteDataSource
 ): NotificationRepository {
 
-    override suspend fun getNotifications(): Result<List<NotificationEntity>>
+    override suspend fun getNotifications(cursor: String?, limit: Int): Result<List<NotificationEntity>>
     = runCatching {
-        val response = remoteDataSource.getNotifications()
+        val response = remoteDataSource.getNotifications(cursor, limit)
         response
     }
 

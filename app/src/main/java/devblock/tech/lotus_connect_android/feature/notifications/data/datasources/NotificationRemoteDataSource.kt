@@ -7,8 +7,8 @@ import devblock.tech.lotus_connect_android.feature.notifications.domain.entities
 class NotificationRemoteDataSource(
     private val notificationService: NotificationService
 ) {
-    suspend fun getNotifications(): List<NotificationEntity> {
-        val response = notificationService.getNotifications()
+    suspend fun getNotifications(cursor: String?, limit: Int): List<NotificationEntity> {
+        val response = notificationService.getNotifications(cursor, limit)
 
         if (response.isSuccessful && response.body() != null) {
             return response.body()!!
