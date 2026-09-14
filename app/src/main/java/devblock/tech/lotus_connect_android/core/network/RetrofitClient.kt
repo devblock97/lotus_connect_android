@@ -1,6 +1,7 @@
 package devblock.tech.lotus_connect_android.core.network
 
 import devblock.tech.lotus_connect_android.feature.auth.data.remote.AuthApiService
+import devblock.tech.lotus_connect_android.feature.contacts.data.service.ContactsService
 import devblock.tech.lotus_connect_android.feature.notifications.data.service.NotificationService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -45,5 +46,9 @@ object RetrofitClient {
 
     val notificationApiService: NotificationService by lazy {
         retrofit.create(NotificationService::class.java)
+    }
+
+    val contactsApiService: ContactsService by lazy {
+        retrofit.create(ContactsService::class.java)
     }
 }
