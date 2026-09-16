@@ -1,4 +1,4 @@
-package devblock.tech.lotus_connect_android.feature.chat.presentation
+package devblock.tech.lotus_connect_android.feature.chat.presentation.view
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

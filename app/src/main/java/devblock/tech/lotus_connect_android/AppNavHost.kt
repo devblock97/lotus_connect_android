@@ -17,7 +17,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthScreen
 import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthViewModel
-import devblock.tech.lotus_connect_android.feature.chat.presentation.ChatScreen
+import devblock.tech.lotus_connect_android.feature.chat.presentation.view.ChatScreen
+import devblock.tech.lotus_connect_android.feature.chat.presentation.view.ConversationListScreen
+import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.ConversationListViewModel
 import devblock.tech.lotus_connect_android.feature.contacts.presentation.ContactsScreen
 import devblock.tech.lotus_connect_android.feature.contacts.presentation.view_model.ContactsViewModel
 import devblock.tech.lotus_connect_android.feature.home.presentation.HomeScreen
@@ -81,6 +83,14 @@ fun AppNavHost() {
             composable(Routes.HOME) {
                 HomeScreen()
             }
+            composable(Routes.CONVERSATIONS) {
+                val viewModel: ConversationListViewModel = viewModel(
+                    factory = ConversationListViewModel.Factory
+                )
+                ConversationListScreen(
+                    viewModel = viewModel
+                )
+            }
             composable(Routes.CHAT) {
                 ChatScreen()
             }
@@ -88,8 +98,6 @@ fun AppNavHost() {
                 val notificationViewModel: NotificationViewModel = viewModel(
                     factory = NotificationViewModel.Factory
                 )
-                val uiState by notificationViewModel.uiState.collectAsState()
-
                 NotificationsScreen(
                     viewModel = notificationViewModel
                 )
