@@ -1,9 +1,11 @@
 package devblock.tech.lotus_connect_android
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Home
@@ -21,6 +23,7 @@ import devblock.tech.lotus_connect_android.feature.auth.data.local.AuthLocalData
 import devblock.tech.lotus_connect_android.ui.theme.LotusConnectTheme
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val localDataSource = AuthLocalDataSource(applicationContext)
