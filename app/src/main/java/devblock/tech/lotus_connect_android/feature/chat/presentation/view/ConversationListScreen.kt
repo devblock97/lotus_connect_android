@@ -3,6 +3,7 @@ package devblock.tech.lotus_connect_android.feature.chat.presentation.view
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,7 +36,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
+import devblock.tech.lotus_connect_android.Routes
 import devblock.tech.lotus_connect_android.core.utils.gradientFor
+import devblock.tech.lotus_connect_android.core.utils.toDisplayDate
 import devblock.tech.lotus_connect_android.feature.chat.domain.entities.ConversationEntity
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.ConversationListViewModel
 import java.time.Instant
@@ -48,7 +53,8 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationListScreen(
-    viewModel: ConversationListViewModel
+    viewModel: ConversationListViewModel,
+    onConversationClick: (String) -> Unit
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
@@ -70,7 +76,12 @@ fun ConversationListScreen(
                 modifier = Modifier.padding(innerPadding)
             ) {
                 items(uiState.conversations, key = { it.id }) { conversation ->
-                    ConversationCard(conversation = conversation)
+                    ConversationCard(
+                        conversation = conversation,
+                        onClick = {
+                            onConversationClick(conversation.id)
+                        }
+                    )
                 }
             }
         }
@@ -91,37 +102,10 @@ fun ConversationListScreen(
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-private fun toDisplayDate(input: String?): String {
-    if (input.isNullOrBlank()) return ""
-    return try {
-        val outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-        if (input.contains("T")) {
-            // ISO-8601 instant/offset format: e.g. "2026-08-24T09:49:24.194704Z"
-            try {
-                Instant.parse(input).atZone(ZoneId.systemDefault()).format(outputFormatter)
-            } catch (_: Exception) {
-                LocalDateTime.parse(input).format(outputFormatter)
-            }
-        } else {
-            // Date-only input: "2024-06-15"
-            val date = LocalDate.parse(input)
-            date.format(outputFormatter)
-        }
-    } catch (e: Exception) {
-        // Fallback: safely extract YYYY-MM-DD or return raw input if parsing fails
-        if (input.length >= 10 && input[4] == '-' && input[7] == '-') {
-            val parts = input.take(10).split("-")
-            "${parts[2]}/${parts[1]}/${parts[0]}"
-        } else {
-            input
-        }
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun ConversationCard(
-    conversation: ConversationEntity
+    conversation: ConversationEntity,
+    onClick: () -> Unit
 ) {
 
     val gradient = remember(conversation.id) { gradientFor(conversation.id) }
@@ -132,6 +116,7 @@ private fun ConversationCard(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

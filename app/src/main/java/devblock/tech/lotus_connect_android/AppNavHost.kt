@@ -1,5 +1,7 @@
 package devblock.tech.lotus_connect_android
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,10 +17,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthScreen
 import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthViewModel
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view.ChatScreen
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view.ConversationListScreen
+import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.ChatViewModel
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.ConversationListViewModel
 import devblock.tech.lotus_connect_android.feature.contacts.presentation.ContactsScreen
 import devblock.tech.lotus_connect_android.feature.contacts.presentation.view_model.ContactsViewModel
@@ -27,6 +31,7 @@ import devblock.tech.lotus_connect_android.feature.notifications.presentation.vi
 import devblock.tech.lotus_connect_android.feature.notifications.presentation.view_model.NotificationViewModel
 import devblock.tech.lotus_connect_android.feature.settings.presentation.SettingsScreen
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
@@ -34,9 +39,11 @@ fun AppNavHost() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    val shouldShowBottomBar = bottomNavItems.any { it.route == currentRoute }
+
     Scaffold(
         bottomBar = {
-            if (currentRoute != Routes.AUTH) {
+            if (shouldShowBottomBar) {
                 AppBottomNavBar(
                     selectedRoute = currentRoute ?: Routes.HOME,
                     onItemSelected = { route ->
@@ -55,7 +62,7 @@ fun AppNavHost() {
         NavHost(
             navController = navController,
             startDestination = Routes.AUTH,
-            modifier = androidx.compose.ui.Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding)
         ) {
             composable(Routes.AUTH) {
                 val authViewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory)
@@ -78,7 +85,6 @@ fun AppNavHost() {
                         viewModel = authViewModel
                     )
                 }
-
             }
             composable(Routes.HOME) {
                 HomeScreen()
@@ -88,11 +94,23 @@ fun AppNavHost() {
                     factory = ConversationListViewModel.Factory
                 )
                 ConversationListScreen(
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    onConversationClick = { conversationId ->
+                        navController.navigate("chat/$conversationId")
+                    }
                 )
             }
-            composable(Routes.CHAT) {
-                ChatScreen()
+            composable(
+                route = Routes.CHAT,
+                arguments = listOf(
+                    navArgument("conversationId") { type = androidx.navigation.NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val conversationId = backStackEntry.arguments?.getString("conversationId").orEmpty()
+                val viewModel: ChatViewModel = viewModel(
+                    factory = ChatViewModel.Factory
+                )
+                ChatScreen(conversationId = conversationId, viewModel = viewModel)
             }
             composable(Routes.NOTIFICATIONS) {
                 val notificationViewModel: NotificationViewModel = viewModel(
