@@ -3,6 +3,7 @@ package devblock.tech.lotus_connect_android.core.network
 import devblock.tech.lotus_connect_android.feature.auth.data.remote.AuthApiService
 import devblock.tech.lotus_connect_android.feature.chat.data.service.ChatService
 import devblock.tech.lotus_connect_android.feature.contacts.data.service.ContactsService
+import devblock.tech.lotus_connect_android.feature.home.data.service.FeedService
 import devblock.tech.lotus_connect_android.feature.notifications.data.service.NotificationService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -55,5 +56,9 @@ object RetrofitClient {
 
     val chatApiService: ChatService by lazy {
         retrofit.create(ChatService::class.java)
+    }
+
+    val feedApiService: FeedService by lazy {
+        retrofit.create(FeedService::class.java)
     }
 }
