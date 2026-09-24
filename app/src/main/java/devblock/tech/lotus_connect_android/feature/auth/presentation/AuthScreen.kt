@@ -1,6 +1,5 @@
 package devblock.tech.lotus_connect_android.feature.auth.presentation
 
-import android.graphics.drawable.Icon
 import android.util.Patterns
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -43,8 +42,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.RegisterRequest
-import org.intellij.lang.annotations.Pattern
+import devblock.tech.lotus_connect_android.feature.auth.data.dto.RegisterRequest
 
 @Composable
 fun AuthScreen(

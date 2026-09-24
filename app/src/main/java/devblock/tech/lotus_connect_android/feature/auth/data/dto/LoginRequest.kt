@@ -1,4 +1,4 @@
-package devblock.tech.lotus_connect_android.feature.auth.data.remote.dto
+package devblock.tech.lotus_connect_android.feature.auth.data.dto
 
 import com.google.gson.annotations.SerializedName
 import devblock.tech.lotus_connect_android.feature.auth.domain.entities.User
@@ -15,6 +15,7 @@ data class UserDto(
     @SerializedName("username") val username: String,
     @SerializedName("email") val email: String,
     @SerializedName("fullName") val fullName: String? = null,
+    @SerializedName("avatarUrl") val avatarUrl: String? = null,
     @SerializedName("friendshipStatus") val friendshipStatus: String? = null,
     @SerializedName("friendshipSenderId") val friendshipSenderId: String? = null
 ) {
@@ -23,6 +24,7 @@ data class UserDto(
         username = username,
         email = email,
         fullName = fullName,
+        avatarUrl = avatarUrl,
         friendshipStatus = friendshipStatus,
         friendshipSenderId = friendshipSenderId
     )

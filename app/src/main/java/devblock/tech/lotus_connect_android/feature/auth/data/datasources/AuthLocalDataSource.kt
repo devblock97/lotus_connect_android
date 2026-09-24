@@ -1,11 +1,11 @@
-package devblock.tech.lotus_connect_android.feature.auth.data.local
+package devblock.tech.lotus_connect_android.feature.auth.data.datasources
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import devblock.tech.lotus_connect_android.feature.auth.domain.entities.User
-import androidx.core.content.edit
 
 class AuthLocalDataSource(context: Context) {
     private val masterKey = MasterKey.Builder(context)
@@ -21,12 +21,14 @@ class AuthLocalDataSource(context: Context) {
     )
 
     fun saveSession(accessToken: String, refreshToken: String, user: User) {
+        println("check avatar url save: ${user.avatarUrl}")
         prefs.edit {
             putString("access_token", accessToken)
                 .putString("refresh_token", refreshToken)
                 .putString("user_id", user.id)
                 .putString("user_email", user.email)
                 .putString("user_fullname", user.fullName)
+                .putString("avatar", user.avatarUrl)
         }
     }
 
@@ -39,7 +41,15 @@ class AuthLocalDataSource(context: Context) {
         val username = prefs.getString("user_name", "") ?: ""
         val email = prefs.getString("user_email", "") ?: ""
         val fullName = prefs.getString("user_fullname", null)
-        return User(id = id, username = username, email = email, fullName = fullName)
+        val avatar = prefs.getString("avatar", null)
+        println("check avatar url get: $avatar")
+        return User(
+            id = id,
+            username = username,
+            email = email,
+            fullName = fullName,
+            avatarUrl = avatar
+        )
     }
 
     fun getRefreshToken(): String? = prefs.getString("refresh_token", null)

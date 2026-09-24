@@ -19,7 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import devblock.tech.lotus_connect_android.core.network.RetrofitClient
-import devblock.tech.lotus_connect_android.feature.auth.data.local.AuthLocalDataSource
+import devblock.tech.lotus_connect_android.feature.auth.data.datasources.AuthLocalDataSource
 import devblock.tech.lotus_connect_android.ui.theme.LotusConnectTheme
 
 class MainActivity : ComponentActivity() {

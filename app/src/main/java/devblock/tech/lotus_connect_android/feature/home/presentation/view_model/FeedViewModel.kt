@@ -59,7 +59,12 @@ class FeedViewModel(
                     }
                 )
             } catch (e: Exception) {
-                throw Exception("")
+                _uiState.update { state ->
+                    state.copy(
+                        isLoading = false,
+                        errorMessage = e.message ?: "An unexpected error occurred"
+                    )
+                }
             }
         }
     }

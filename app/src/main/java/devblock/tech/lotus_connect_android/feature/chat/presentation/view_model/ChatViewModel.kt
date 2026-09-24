@@ -7,7 +7,7 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import devblock.tech.lotus_connect_android.core.network.RetrofitClient
-import devblock.tech.lotus_connect_android.feature.auth.data.local.AuthLocalDataSource
+import devblock.tech.lotus_connect_android.feature.auth.data.datasources.AuthLocalDataSource
 import devblock.tech.lotus_connect_android.feature.chat.data.datasources.ChatRemoteDataSourceImpl
 import devblock.tech.lotus_connect_android.feature.chat.data.repositories.ChatRepositoryImpl
 import devblock.tech.lotus_connect_android.feature.chat.domain.usecase.GetMessagesHistoryParam
@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.math.exp
 
 @Suppress("UNCHECKED_CAST")
 class ChatViewModel(
