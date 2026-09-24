@@ -1,4 +1,4 @@
-package devblock.tech.lotus_connect_android.feature.auth.presentation
+package devblock.tech.lotus_connect_android.feature.auth.presentation.view
 
 import android.util.Patterns
 import androidx.compose.foundation.clickable
@@ -43,6 +43,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import devblock.tech.lotus_connect_android.feature.auth.data.dto.RegisterRequest
+import devblock.tech.lotus_connect_android.feature.auth.presentation.view_model.AuthViewModel
 
 @Composable
 fun AuthScreen(
@@ -352,10 +353,10 @@ fun AuthScreen(
     if (uiState.errorMessage != null) {
         AlertDialog(
             onDismissRequest = { viewModel.clearError() },
-            title = { Text("Login Failed") },
+            title = { Text(if (isSignIn) "Sign In Failed" else "Sign Up Failed") },
             text = { Text(uiState.errorMessage!!) },
             confirmButton = {
-                TextButton(onClick = { viewModel.clearError()}) {
+                TextButton(onClick = { viewModel.clearError() }) {
                     Text("OK")
                 }
             }
