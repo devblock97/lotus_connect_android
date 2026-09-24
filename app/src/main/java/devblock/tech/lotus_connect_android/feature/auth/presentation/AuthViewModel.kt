@@ -4,12 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.viewModelFactory
 import devblock.tech.lotus_connect_android.core.network.RetrofitClient
-import devblock.tech.lotus_connect_android.feature.auth.data.local.AuthLocalDataSource
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.AuthRemoteDataSource
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.RegisterRequest
+import devblock.tech.lotus_connect_android.feature.auth.data.datasources.AuthLocalDataSource
+import devblock.tech.lotus_connect_android.feature.auth.data.datasources.AuthRemoteDataSource
+import devblock.tech.lotus_connect_android.feature.auth.data.dto.RegisterRequest
 import devblock.tech.lotus_connect_android.feature.auth.data.repositories.AuthRepositoryImpl
 import devblock.tech.lotus_connect_android.feature.auth.domain.usecase.GetCachedUserUseCase
 import devblock.tech.lotus_connect_android.feature.auth.domain.usecase.LoginParam
@@ -22,7 +20,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import retrofit2.Retrofit
 
 class AuthViewModel(
     private val loginUseCase: LoginUseCase,
@@ -41,6 +38,7 @@ class AuthViewModel(
     fun checkSession() {
         viewModelScope.launch {
             val user = getCachedUserUseCase()
+            println("check user session: $user")
             if (user != null) {
                 _uiState.update {
                     it.copy(user = user, isSuccess = true, isCheckingSession = false)
@@ -59,13 +57,11 @@ class AuthViewModel(
 
             result.fold(
                 onSuccess = { user ->
-                    println("check auth success: ${user.fullName}")
                     _uiState.update {
                         it.copy(isLoading = false, user = user, isSuccess = true)
                     }
                 },
                 onFailure = { error ->
-                    println("check auth failure: ${error.message}")
                     _uiState.update {
                         it.copy(isLoading = false, errorMessage = error.message ?: "Authentication failed")
                     }

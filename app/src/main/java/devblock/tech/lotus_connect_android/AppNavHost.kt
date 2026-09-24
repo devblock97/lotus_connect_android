@@ -1,5 +1,6 @@
 package devblock.tech.lotus_connect_android
 
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
@@ -30,7 +31,9 @@ import devblock.tech.lotus_connect_android.feature.home.presentation.HomeScreen
 import devblock.tech.lotus_connect_android.feature.home.presentation.view_model.FeedViewModel
 import devblock.tech.lotus_connect_android.feature.notifications.presentation.view.NotificationsScreen
 import devblock.tech.lotus_connect_android.feature.notifications.presentation.view_model.NotificationViewModel
-import devblock.tech.lotus_connect_android.feature.settings.presentation.SettingsScreen
+import devblock.tech.lotus_connect_android.feature.settings.presentation.view.SettingsScreen
+import devblock.tech.lotus_connect_android.feature.settings.presentation.view.UploadAvatarScreen
+import devblock.tech.lotus_connect_android.feature.settings.presentation.view_model.ProfileViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -143,7 +146,32 @@ fun AppNavHost() {
                             popUpTo(0) { inclusive = true }
                             launchSingleTop = true
                         }
+                    },
+                    onEditAvatarClick = { avatarUrl ->
+                        val encodedUrl = Uri.encode(avatarUrl)
+                        navController.navigate("upload_avatar?avatarUrl=$encodedUrl")
                     }
+                )
+            }
+            composable(
+                Routes.UPLOAD_AVATAR,
+                arguments = listOf(
+                    navArgument("avatarUrl") {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = ""
+                    }
+                )
+            ) { backStackEntry ->
+                val rawAvatarUrl = backStackEntry.arguments?.getString("avatarUrl").orEmpty()
+                val avatarUrl = Uri.decode(rawAvatarUrl)
+                val profileViewModel: ProfileViewModel = viewModel(
+                    factory = ProfileViewModel.Factory
+                )
+                UploadAvatarScreen(
+                    viewModel = profileViewModel,
+                    avatarUrl = avatarUrl,
+                    onDone = { navController.popBackStack() }
                 )
             }
         }

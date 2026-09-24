@@ -1,10 +1,11 @@
-package devblock.tech.lotus_connect_android.feature.auth.data.remote
+package devblock.tech.lotus_connect_android.feature.auth.data.datasources
 
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.AuthResponseDto
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.LoginRequest
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.LogoutRequest
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.RegisterRequest
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.UserDto
+import devblock.tech.lotus_connect_android.feature.auth.data.dto.AuthResponseDto
+import devblock.tech.lotus_connect_android.feature.auth.data.dto.LoginRequest
+import devblock.tech.lotus_connect_android.feature.auth.data.dto.LogoutRequest
+import devblock.tech.lotus_connect_android.feature.auth.data.dto.RegisterRequest
+import devblock.tech.lotus_connect_android.feature.auth.data.dto.UserDto
+import devblock.tech.lotus_connect_android.feature.auth.data.service.AuthApiService
 
 class AuthRemoteDataSource(
     private val apiService: AuthApiService
@@ -28,7 +29,7 @@ class AuthRemoteDataSource(
         }
     }
 
-    suspend fun register(request:  RegisterRequest): UserDto {
+    suspend fun register(request: RegisterRequest): UserDto {
         val response = apiService.register(request)
 
         if (response.isSuccessful && response.body() != null) {

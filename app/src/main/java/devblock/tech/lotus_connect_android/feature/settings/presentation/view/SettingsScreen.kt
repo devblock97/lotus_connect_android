@@ -1,8 +1,11 @@
-package devblock.tech.lotus_connect_android.feature.settings.presentation
+package devblock.tech.lotus_connect_android.feature.settings.presentation.view
 
-import android.graphics.drawable.Icon
-import android.widget.Switch
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,13 +18,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
@@ -40,7 +44,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,11 +51,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthViewModel
+import devblock.tech.lotus_connect_android.feature.home.presentation.widget.ImageWithLoader
 
 @Composable
 fun SettingsScreen(
@@ -60,6 +66,7 @@ fun SettingsScreen(
     isLoggedIn: Boolean = true,
     onLoginClick: () -> Unit = {},
     onLogout: () -> Unit = {},
+    onEditAvatarClick: (String) -> Unit = {},
     viewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory)
 ) {
 
@@ -67,6 +74,13 @@ fun SettingsScreen(
 
     val uiState by viewModel.uiState.collectAsState()
     val currentUser = uiState.user
+
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        selectedImageUri = uri
+    }
 
     Column(
         modifier = modifier
@@ -89,20 +103,50 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            shape = androidx.compose.foundation.shape.CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
+                    modifier = modifier.size(56.dp),
+                    contentAlignment = Alignment.BottomEnd
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Person,
-                        contentDescription = "Profile",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(32.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (currentUser?.avatarUrl != null) {
+                            println("current user: ${currentUser.avatarUrl}")
+                            ImageWithLoader(
+                                imageUrl = currentUser.avatarUrl.replace("127.0.0.1", "10.0.2.2"),
+                                size = 56.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.Person,
+                                contentDescription = "Profile",
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .clickable(onClick = { onEditAvatarClick(currentUser?.avatarUrl ?: "") })
+                            .background(MaterialTheme.colorScheme.primary)
+                            .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.CameraAlt,
+                            contentDescription = "Edit avatar",
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
@@ -114,9 +158,9 @@ fun SettingsScreen(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = currentUser?.username ?: "",
+                        text = currentUser?.username ?: currentUser?.email ?: "",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.Black
                     )
                 }
             }
@@ -245,7 +289,7 @@ private fun SettingsItem(
     trailingText: String? = null,
     onClick: () -> Unit
 ) {
-    androidx.compose.material3.ListItem(
+    ListItem(
         headlineContent = { Text(title)},
         leadingContent = { Icon(icon, contentDescription = title)},
         trailingContent = {
