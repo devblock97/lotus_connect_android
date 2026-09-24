@@ -1,10 +1,11 @@
-package devblock.tech.lotus_connect_android.feature.auth.presentation
+package devblock.tech.lotus_connect_android.feature.auth.presentation.view_model
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import devblock.tech.lotus_connect_android.core.network.RetrofitClient
+import devblock.tech.lotus_connect_android.core.view_model.BaseViewModel
 import devblock.tech.lotus_connect_android.feature.auth.data.datasources.AuthLocalDataSource
 import devblock.tech.lotus_connect_android.feature.auth.data.datasources.AuthRemoteDataSource
 import devblock.tech.lotus_connect_android.feature.auth.data.dto.RegisterRequest
@@ -26,7 +27,7 @@ class AuthViewModel(
     private val logoutUseCase: LogoutUseCase,
     private val registerUseCase: RegisterUseCase,
     private val getCachedUserUseCase: GetCachedUserUseCase
-) : ViewModel() {
+) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState(isCheckingSession = true))
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -37,13 +38,16 @@ class AuthViewModel(
 
     fun checkSession() {
         viewModelScope.launch {
-            val user = getCachedUserUseCase()
-            println("check user session: $user")
-            if (user != null) {
-                _uiState.update {
-                    it.copy(user = user, isSuccess = true, isCheckingSession = false)
+            try {
+                val user = getCachedUserUseCase()
+                if (user != null) {
+                    _uiState.update {
+                        it.copy(user = user, isSuccess = true, isCheckingSession = false)
+                    }
+                } else {
+                    _uiState.update { it.copy(isCheckingSession = false) }
                 }
-            } else {
+            } catch (e: Exception) {
                 _uiState.update { it.copy(isCheckingSession = false) }
             }
         }
@@ -51,20 +55,24 @@ class AuthViewModel(
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, error = null) }
 
             val result = loginUseCase(LoginParam(email = email, password = password))
 
             result.fold(
                 onSuccess = { user ->
                     _uiState.update {
-                        it.copy(isLoading = false, user = user, isSuccess = true)
+                        it.copy(
+                            isLoading = false,
+                            user = user,
+                            isSuccess = true,
+                            errorMessage = null,
+                            error = null
+                        )
                     }
                 },
                 onFailure = { error ->
-                    _uiState.update {
-                        it.copy(isLoading = false, errorMessage = error.message ?: "Authentication failed")
-                    }
+                    handleException(error, defaultMessage = "Authentication failed")
                 }
             )
         }
@@ -72,7 +80,7 @@ class AuthViewModel(
 
     fun register(params: RegisterRequest) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, error = null) }
 
             val result = registerUseCase(RegisterParam(
                 username = params.username,
@@ -87,19 +95,28 @@ class AuthViewModel(
                         it.copy(
                             isLoading = false,
                             user = user,
-                            isSuccess = true
+                            isSuccess = true,
+                            errorMessage = null,
+                            error = null
                         )
                     }
                 },
                 onFailure = { error ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = error.message ?: "Register failed"
-                        )
-                    }
+                    handleException(error, defaultMessage = "Registration failed")
                 }
             )
+        }
+    }
+
+    fun handleException(error: Throwable, defaultMessage: String = "Authentication failed") {
+        super.handleException(error, defaultMessage) { message, appException ->
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    errorMessage = message,
+                    error = appException
+                )
+            }
         }
     }
 
@@ -107,13 +124,13 @@ class AuthViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             logoutUseCase()
-            _uiState.value = AuthUiState()
+            _uiState.value = AuthUiState(isCheckingSession = false)
             onComplete()
         }
     }
 
     fun clearError() {
-        _uiState.update { it.copy(errorMessage = null) }
+        _uiState.update { it.copy(errorMessage = null, error = null) }
     }
 
     companion object {

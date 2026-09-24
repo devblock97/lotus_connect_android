@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import devblock.tech.lotus_connect_android.core.view_model.BaseViewModel
 import java.io.File
 
 data class ProfileUiState(
@@ -26,14 +27,14 @@ data class ProfileUiState(
 
 class ProfileViewModel(
     private val uploadAvatarUseCase: UploadAvatarUseCase
-) : ViewModel() {
+) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
     fun uploadAvatar(file: File) {
-
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             val param = UploadAvatarParam(file)
             val result = uploadAvatarUseCase(param)
 
@@ -48,11 +49,13 @@ class ProfileViewModel(
                     }
                 },
                 onFailure = { error ->
-                    _uiState.update { state ->
-                        state.copy(
-                            isLoading = false,
-                            errorMessage = error.message
-                        )
+                    handleException(error, defaultMessage = "Failed to upload avatar") { message, _ ->
+                        _uiState.update { state ->
+                            state.copy(
+                                isLoading = false,
+                                errorMessage = message
+                            )
+                        }
                     }
                 }
             )
@@ -61,7 +64,13 @@ class ProfileViewModel(
 
     fun resetState() {
         _uiState.update { state ->
-            state.copy(isLoading = false)
+            state.copy(isLoading = false, errorMessage = null)
+        }
+    }
+
+    fun clearError() {
+        _uiState.update { state ->
+            state.copy(errorMessage = null)
         }
     }
 

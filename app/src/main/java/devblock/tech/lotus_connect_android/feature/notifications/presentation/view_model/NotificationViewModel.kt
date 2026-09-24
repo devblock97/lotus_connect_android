@@ -21,13 +21,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+import devblock.tech.lotus_connect_android.core.view_model.BaseViewModel
+
 class NotificationViewModel(
     private val getNotificationsUseCase: GetNotificationsUseCase,
     private val readNotificationUseCase: ReadNotificationUseCase,
     private val readAllNotificationsUseCase: ReadAllNotificationsUseCase,
     private val deleteNotificationUseCase: DeleteNotificationUseCase,
     private val deleteAllNotificationsUseCase: DeleteAllNotificationsUseCase,
-) : ViewModel() {
+) : BaseViewModel() {
     private val _uiState = MutableStateFlow(NotificationsUiState())
     val uiState: StateFlow<NotificationsUiState> = _uiState.asStateFlow()
 
@@ -37,7 +39,7 @@ class NotificationViewModel(
 
     fun getNotifications() {
         _uiState.update { state ->
-            state.copy(isLoading = true)
+            state.copy(isLoading = true, errorMessage = null)
         }
 
         viewModelScope.launch {
@@ -63,11 +65,13 @@ class NotificationViewModel(
                 },
                 onFailure = { error ->
                     println("notification failure: ${error.message}")
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = error.message ?: "Failed to load notifications"
-                        )
+                    handleException(error, defaultMessage = "Failed to load notifications") { message, _ ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = message
+                            )
+                        }
                     }
                 }
             )
@@ -108,17 +112,21 @@ class NotificationViewModel(
                     },
                     onFailure = { error ->
                         println("loadNextPage failure: ${error.message}")
-                        _uiState.update { state ->
-                            state.copy(
-                                isLoadingMore = false,
-                                errorMessage = error.message ?: "Failed to load notifications"
-                            )
+                        handleException(error, defaultMessage = "Failed to load notifications") { message, _ ->
+                            _uiState.update { state ->
+                                state.copy(
+                                    isLoadingMore = false,
+                                    errorMessage = message
+                                )
+                            }
                         }
                     }
                 )
             } catch (e: Exception) {
                 println("loadNextPage exception: ${e.message}")
-                _uiState.update { it.copy(isLoadingMore = false, errorMessage = e.message) }
+                handleException(e, defaultMessage = "Failed to load notifications") { message, _ ->
+                    _uiState.update { it.copy(isLoadingMore = false, errorMessage = message) }
+                }
             }
         }
     }
@@ -141,11 +149,13 @@ class NotificationViewModel(
                     }
                 },
                 onFailure = { error ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = error.message ?: "Failed to read notification"
-                        )
+                    handleException(error, defaultMessage = "Failed to read notification") { message, _ ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = message
+                            )
+                        }
                     }
                 }
             )
@@ -163,11 +173,13 @@ class NotificationViewModel(
                     }
                 },
                 onFailure = { error ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = error.message ?: "Failed to read all notification"
-                        )
+                    handleException(error, defaultMessage = "Failed to read all notifications") { message, _ ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = message
+                            )
+                        }
                     }
                 }
             )
@@ -186,12 +198,14 @@ class NotificationViewModel(
             val result = deleteNotificationUseCase(DeleteNotificationParam(notificationId))
 
             result.onFailure { error ->
-                _uiState.update { state ->
-                    state.copy(
-                        notifications = originalList,
-                        isLoading = false,
-                        errorMessage = error.message ?: "Failed to delete notification"
-                    )
+                handleException(error, defaultMessage = "Failed to delete notification") { message, _ ->
+                    _uiState.update { state ->
+                        state.copy(
+                            notifications = originalList,
+                            isLoading = false,
+                            errorMessage = message
+                        )
+                    }
                 }
             }
         }
@@ -210,15 +224,21 @@ class NotificationViewModel(
                     getNotifications()
                 },
                 onFailure = { error ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = error.message ?: "Failed to delete all notifications"
-                        )
+                    handleException(error, defaultMessage = "Failed to delete all notifications") { message, _ ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = message
+                            )
+                        }
                     }
                 }
             )
         }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     companion object {

@@ -2,7 +2,6 @@ package devblock.tech.lotus_connect_android.feature.settings.presentation.view
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -57,7 +56,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthViewModel
+import devblock.tech.lotus_connect_android.feature.auth.presentation.view_model.AuthViewModel
 import devblock.tech.lotus_connect_android.feature.home.presentation.widget.ImageWithLoader
 
 @Composable

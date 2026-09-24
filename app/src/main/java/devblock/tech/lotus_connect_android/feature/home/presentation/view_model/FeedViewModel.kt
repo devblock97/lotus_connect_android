@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+import devblock.tech.lotus_connect_android.core.view_model.BaseViewModel
+
 data class FeedUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -26,7 +28,7 @@ data class FeedUiState(
 @Suppress("UNCHECKED_CAST")
 class FeedViewModel(
     val getFeedUseCase: GetFeedUseCase
-) : ViewModel() {
+) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow<FeedUiState>(FeedUiState())
     val uiState: StateFlow<FeedUiState> = _uiState.asStateFlow()
@@ -41,14 +43,6 @@ class FeedViewModel(
             try {
                 val result = getFeedUseCase()
                 result.fold(
-                    onFailure = { error ->
-                        _uiState.update { state ->
-                            state.copy(
-                                isLoading = false,
-                                errorMessage = error.message
-                            )
-                        }
-                    },
                     onSuccess = { feeds ->
                         _uiState.update { state ->
                             state.copy(
@@ -56,17 +50,33 @@ class FeedViewModel(
                                 feeds = feeds
                             )
                         }
+                    },
+                    onFailure = { error ->
+                        handleException(error, defaultMessage = "Failed to load feed") { message, _ ->
+                            _uiState.update { state ->
+                                state.copy(
+                                    isLoading = false,
+                                    errorMessage = message
+                                )
+                            }
+                        }
                     }
                 )
             } catch (e: Exception) {
-                _uiState.update { state ->
-                    state.copy(
-                        isLoading = false,
-                        errorMessage = e.message ?: "An unexpected error occurred"
-                    )
+                handleException(e, defaultMessage = "Failed to load feed") { message, _ ->
+                    _uiState.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            errorMessage = message
+                        )
+                    }
                 }
             }
         }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     companion object {

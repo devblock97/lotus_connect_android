@@ -1,5 +1,6 @@
 package devblock.tech.lotus_connect_android.feature.auth.data.datasources
 
+import devblock.tech.lotus_connect_android.core.exception.parseHttpAuthError
 import devblock.tech.lotus_connect_android.feature.auth.data.dto.AuthResponseDto
 import devblock.tech.lotus_connect_android.feature.auth.data.dto.LoginRequest
 import devblock.tech.lotus_connect_android.feature.auth.data.dto.LogoutRequest
@@ -17,7 +18,7 @@ class AuthRemoteDataSource(
             return response.body()!!
         } else {
             val errorBody = response.errorBody()?.string()
-            throw Exception(errorBody ?: "Login failed with HTTP ${response.code()}")
+            throw parseHttpAuthError(response.code(), errorBody)
         }
     }
 
@@ -36,7 +37,7 @@ class AuthRemoteDataSource(
             return response.body()!!
         } else {
             val error = response.errorBody()?.string()
-            throw Exception(error ?: "Register failed with HTTP ${response.code()}")
+            throw parseHttpAuthError(response.code(), error)
         }
     }
 

@@ -17,6 +17,7 @@ import devblock.tech.lotus_connect_android.feature.notifications.domain.usecase.
 import devblock.tech.lotus_connect_android.feature.notifications.domain.usecase.ReadNotificationUseCase
 import devblock.tech.lotus_connect_android.feature.notifications.presentation.view_model.NotificationViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import devblock.tech.lotus_connect_android.core.view_model.BaseViewModel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -24,7 +25,7 @@ import kotlinx.coroutines.launch
 
 class ContactsViewModel(
     private val getFriendUseCase: GetFriendUseCase,
-): ViewModel() {
+): BaseViewModel() {
 
     private val _uiState = MutableStateFlow(ContactsUiState())
     val uiState: StateFlow<ContactsUiState> = _uiState.asStateFlow()
@@ -35,18 +36,10 @@ class ContactsViewModel(
 
     fun getFriendsList() {
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             val result = getFriendUseCase()
 
             result.fold(
-                onFailure = { error ->
-                    println("get friend list failure: ${error.message}")
-                    _uiState.update { state ->
-                        state.copy(
-                            isLoading = false,
-                            errorMessage = error.message ?: "Failed to load friend"
-                        )
-                    }
-                },
                 onSuccess = { friends ->
                     println("get friend list success")
                     _uiState.update { state ->
@@ -55,9 +48,24 @@ class ContactsViewModel(
                             friends = friends
                         )
                     }
+                },
+                onFailure = { error ->
+                    println("get friend list failure: ${error.message}")
+                    handleException(error, defaultMessage = "Failed to load friends list") { message, _ ->
+                        _uiState.update { state ->
+                            state.copy(
+                                isLoading = false,
+                                errorMessage = message
+                            )
+                        }
+                    }
                 }
             )
         }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     companion object {

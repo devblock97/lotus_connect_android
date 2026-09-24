@@ -19,8 +19,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthScreen
-import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthViewModel
+import devblock.tech.lotus_connect_android.feature.auth.presentation.view.AuthScreen
+import devblock.tech.lotus_connect_android.feature.auth.presentation.view_model.AuthViewModel
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view.ChatScreen
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view.ConversationListScreen
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.ChatViewModel

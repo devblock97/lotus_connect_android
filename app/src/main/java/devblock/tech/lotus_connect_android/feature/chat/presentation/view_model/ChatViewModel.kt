@@ -17,12 +17,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+import devblock.tech.lotus_connect_android.core.view_model.BaseViewModel
+
 @Suppress("UNCHECKED_CAST")
 class ChatViewModel(
     savedStateHandle: SavedStateHandle,
     private val getMessagesHistoryUseCase: GetMessagesHistoryUseCase,
     currentUserId: String?
-): ViewModel() {
+): BaseViewModel() {
 
     private val conversationId: String = checkNotNull(savedStateHandle["conversationId"])
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -38,6 +40,7 @@ class ChatViewModel(
 
     private fun getMessages(conversationId: String) {
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
                 val result = getMessagesHistoryUseCase(
                     GetMessagesHistoryParam(conversationId)
@@ -53,19 +56,27 @@ class ChatViewModel(
                         }
                     },
                     onFailure = { error ->
-                        _uiState.update { state ->
-                            state.copy(
-                                isLoading = false,
-                                errorMessage = error.message ?: "Something went wrong. Please try again"
-                            )
+                        handleException(error, defaultMessage = "Failed to load messages") { message, _ ->
+                            _uiState.update { state ->
+                                state.copy(
+                                    isLoading = false,
+                                    errorMessage = message
+                                )
+                            }
                         }
                     }
                 )
 
             } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = e.localizedMessage ?: "An unknown error occurred") }
+                handleException(e, defaultMessage = "Failed to load messages") { message, _ ->
+                    _uiState.update { it.copy(isLoading = false, errorMessage = message) }
+                }
             }
         }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     companion object {
