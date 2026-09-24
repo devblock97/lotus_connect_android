@@ -41,7 +41,6 @@ class ContactsViewModel(
 
             result.fold(
                 onSuccess = { friends ->
-                    println("get friend list success")
                     _uiState.update { state ->
                         state.copy(
                             isLoading = false,
@@ -50,7 +49,6 @@ class ContactsViewModel(
                     }
                 },
                 onFailure = { error ->
-                    println("get friend list failure: ${error.message}")
                     handleException(error, defaultMessage = "Failed to load friends list") { message, _ ->
                         _uiState.update { state ->
                             state.copy(

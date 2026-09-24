@@ -1,4 +1,4 @@
-package devblock.tech.lotus_connect_android.feature.contacts.presentation
+package devblock.tech.lotus_connect_android.feature.contacts.presentation.view
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
