@@ -139,7 +139,7 @@ fun NotificationsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            } else if (uiState.isLoading && uiState.notifications.isEmpty()) {
+            } else if (uiState.isLoading) {
                 NotificationSkeletonList()
             } else {
                 LazyColumn(

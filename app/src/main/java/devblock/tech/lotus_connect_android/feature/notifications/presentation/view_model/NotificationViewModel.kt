@@ -33,11 +33,15 @@ class NotificationViewModel(
     private val _uiState = MutableStateFlow(NotificationsUiState())
     val uiState: StateFlow<NotificationsUiState> = _uiState.asStateFlow()
 
+    private var loadMoreJob: kotlinx.coroutines.Job? = null
+
     init {
         getNotifications()
     }
 
     fun getNotifications() {
+        loadMoreJob?.cancel()
+
         _uiState.update { state ->
             state.copy(isLoading = true, errorMessage = null)
         }
@@ -45,12 +49,11 @@ class NotificationViewModel(
         viewModelScope.launch {
             val result = getNotificationsUseCase(GetNotificationsParam(
                 cursor = null,
-                limit = 10,
+                limit = PAGE_SIZE,
             ))
 
             result.fold(
                 onSuccess = { notifications ->
-                    println("notification success: ${notifications.size}")
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -58,13 +61,13 @@ class NotificationViewModel(
                             notifications = notifications,
                             errorMessage = null,
                             isSuccess = true,
-                            hasMore = notifications.size >= 10,
+                            hasMore = notifications.size >= PAGE_SIZE,
                             nextCursor = notifications.lastOrNull()?.id
                         )
                     }
                 },
                 onFailure = { error ->
-                    println("notification failure: ${error.message}")
+
                     handleException(error, defaultMessage = "Failed to load notifications") { message, _ ->
                         _uiState.update {
                             it.copy(
@@ -80,7 +83,8 @@ class NotificationViewModel(
 
     fun loadNextPage() {
         val current = _uiState.value
-        if (current.isLoadingMore
+        if (loadMoreJob?.isActive == true
+            || current.isLoadingMore
             || !current.hasMore
             || current.isLoading
             || current.nextCursor == null
@@ -88,30 +92,30 @@ class NotificationViewModel(
             return
         }
 
-        viewModelScope.launch {
+        loadMoreJob = viewModelScope.launch {
             _uiState.update { state ->
                 state.copy(isLoadingMore = true)
             }
 
             try {
                 val response = getNotificationsUseCase(
-                    GetNotificationsParam(cursor = current.nextCursor, limit = 10)
+                    GetNotificationsParam(cursor = current.nextCursor, limit = PAGE_SIZE)
                 )
                 response.fold(
                     onSuccess = { notifications ->
-                        println("loadNextPage success: got ${notifications.size} items")
                         _uiState.update { state ->
+                            val existingIds = state.notifications.map { it.id }.toSet()
+                            val uniqueNew = notifications.filterNot { it.id in existingIds }
                             state.copy(
-                                notifications = state.notifications + notifications,
+                                notifications = state.notifications + uniqueNew,
                                 isLoadingMore = false,
-                                hasMore = notifications.size >= 10,
+                                hasMore = notifications.size >= PAGE_SIZE,
                                 isLoading = false,
                                 nextCursor = notifications.lastOrNull()?.id ?: state.nextCursor
                             )
                         }
                     },
                     onFailure = { error ->
-                        println("loadNextPage failure: ${error.message}")
                         handleException(error, defaultMessage = "Failed to load notifications") { message, _ ->
                             _uiState.update { state ->
                                 state.copy(
@@ -123,7 +127,6 @@ class NotificationViewModel(
                     }
                 )
             } catch (e: Exception) {
-                println("loadNextPage exception: ${e.message}")
                 handleException(e, defaultMessage = "Failed to load notifications") { message, _ ->
                     _uiState.update { it.copy(isLoadingMore = false, errorMessage = message) }
                 }
@@ -203,11 +206,11 @@ class NotificationViewModel(
                         state.copy(
                             notifications = originalList,
                             isLoading = false,
-                            errorMessage = message
+                            errorMessage = error.message ?: "Failed to delete notification"
                         )
                     }
                 }
-            }
+            )
         }
     }
 
@@ -242,6 +245,7 @@ class NotificationViewModel(
     }
 
     companion object {
+        private const val PAGE_SIZE = 10
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
