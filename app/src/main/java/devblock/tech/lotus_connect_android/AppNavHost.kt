@@ -1,5 +1,6 @@
 package devblock.tech.lotus_connect_android
 
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
@@ -18,18 +19,21 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthScreen
-import devblock.tech.lotus_connect_android.feature.auth.presentation.AuthViewModel
+import devblock.tech.lotus_connect_android.feature.auth.presentation.view.AuthScreen
+import devblock.tech.lotus_connect_android.feature.auth.presentation.view_model.AuthViewModel
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view.ChatScreen
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view.ConversationListScreen
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.ChatViewModel
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.ConversationListViewModel
-import devblock.tech.lotus_connect_android.feature.contacts.presentation.ContactsScreen
+import devblock.tech.lotus_connect_android.feature.contacts.presentation.view.ContactsScreen
 import devblock.tech.lotus_connect_android.feature.contacts.presentation.view_model.ContactsViewModel
 import devblock.tech.lotus_connect_android.feature.home.presentation.HomeScreen
+import devblock.tech.lotus_connect_android.feature.home.presentation.view_model.FeedViewModel
 import devblock.tech.lotus_connect_android.feature.notifications.presentation.view.NotificationsScreen
 import devblock.tech.lotus_connect_android.feature.notifications.presentation.view_model.NotificationViewModel
-import devblock.tech.lotus_connect_android.feature.settings.presentation.SettingsScreen
+import devblock.tech.lotus_connect_android.feature.settings.presentation.view.SettingsScreen
+import devblock.tech.lotus_connect_android.feature.settings.presentation.view.UploadAvatarScreen
+import devblock.tech.lotus_connect_android.feature.settings.presentation.view_model.ProfileViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -87,7 +91,14 @@ fun AppNavHost() {
                 }
             }
             composable(Routes.HOME) {
-                HomeScreen()
+                val viewModel: FeedViewModel = viewModel(
+                    factory = FeedViewModel.Factory
+                )
+                HomeScreen(
+                    viewModel = viewModel,
+                    onNavigateToChat = { navController.navigate(Routes.CONVERSATIONS) },
+                    onNavigateToNotifications = { navController.navigate(Routes.NOTIFICATIONS) }
+                )
             }
             composable(Routes.CONVERSATIONS) {
                 val viewModel: ConversationListViewModel = viewModel(
@@ -137,7 +148,32 @@ fun AppNavHost() {
                             popUpTo(0) { inclusive = true }
                             launchSingleTop = true
                         }
+                    },
+                    onEditAvatarClick = { avatarUrl ->
+                        val encodedUrl = Uri.encode(avatarUrl)
+                        navController.navigate("upload_avatar?avatarUrl=$encodedUrl")
                     }
+                )
+            }
+            composable(
+                Routes.UPLOAD_AVATAR,
+                arguments = listOf(
+                    navArgument("avatarUrl") {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = ""
+                    }
+                )
+            ) { backStackEntry ->
+                val rawAvatarUrl = backStackEntry.arguments?.getString("avatarUrl").orEmpty()
+                val avatarUrl = Uri.decode(rawAvatarUrl)
+                val profileViewModel: ProfileViewModel = viewModel(
+                    factory = ProfileViewModel.Factory
+                )
+                UploadAvatarScreen(
+                    viewModel = profileViewModel,
+                    avatarUrl = avatarUrl,
+                    onDone = { navController.popBackStack() }
                 )
             }
         }

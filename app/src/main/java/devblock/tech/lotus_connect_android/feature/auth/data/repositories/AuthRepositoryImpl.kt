@@ -1,9 +1,9 @@
 package devblock.tech.lotus_connect_android.feature.auth.data.repositories
 
-import devblock.tech.lotus_connect_android.feature.auth.data.local.AuthLocalDataSource
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.AuthRemoteDataSource
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.LoginRequest
-import devblock.tech.lotus_connect_android.feature.auth.data.remote.dto.RegisterRequest
+import devblock.tech.lotus_connect_android.feature.auth.data.datasources.AuthLocalDataSource
+import devblock.tech.lotus_connect_android.feature.auth.data.datasources.AuthRemoteDataSource
+import devblock.tech.lotus_connect_android.feature.auth.data.dto.LoginRequest
+import devblock.tech.lotus_connect_android.feature.auth.data.dto.RegisterRequest
 import devblock.tech.lotus_connect_android.feature.auth.domain.entities.User
 import devblock.tech.lotus_connect_android.feature.auth.domain.repository.AuthRepository
 
@@ -27,7 +27,15 @@ class AuthRepositoryImpl(
             )
         )
 
+
         val domainUser = response.user.toDomain()
+
+        println("check login method: ${domainUser.avatarUrl}")
+        println("check login method: ${domainUser.username}")
+        println("check login method: ${domainUser.fullName}")
+        println("check login method: ${domainUser.id}")
+        println("check login method: ${domainUser.email}")
+
         localDataSource.saveSession(
             accessToken = response.accessToken,
             refreshToken = response.refreshToken,

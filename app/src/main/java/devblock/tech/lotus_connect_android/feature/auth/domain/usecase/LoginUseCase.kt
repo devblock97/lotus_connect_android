@@ -1,5 +1,6 @@
 package devblock.tech.lotus_connect_android.feature.auth.domain.usecase
 
+import devblock.tech.lotus_connect_android.core.exception.AuthException
 import devblock.tech.lotus_connect_android.feature.auth.domain.entities.User
 import devblock.tech.lotus_connect_android.feature.auth.domain.repository.AuthRepository
 
@@ -15,10 +16,10 @@ class LoginUseCase(
 ) {
     suspend operator fun invoke(params: LoginParam): Result<User> {
         if (params.email.isBlank()) {
-            return Result.failure(IllegalArgumentException("Email cannot be empty"))
+            return Result.failure(AuthException.ValidationException("Email", "Email cannot be empty"))
         }
         if (params.password.isBlank()) {
-            return Result.failure(IllegalArgumentException("Password cannot be empty"))
+            return Result.failure(AuthException.ValidationException("Password", "Password cannot be empty"))
         }
         return authRepository.login(
             email = params.email.trim(),

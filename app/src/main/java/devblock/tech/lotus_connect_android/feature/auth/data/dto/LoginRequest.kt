@@ -1,0 +1,31 @@
+package devblock.tech.lotus_connect_android.feature.auth.data.dto
+
+import com.google.gson.annotations.SerializedName
+import devblock.tech.lotus_connect_android.feature.auth.domain.entities.User
+
+data class LoginRequest(
+    @SerializedName("email") val email: String,
+    @SerializedName("password") val password: String,
+    @SerializedName("platform") val platform: String? = "android",
+    @SerializedName("deviceToken") val deviceToken: String? = null
+)
+
+data class UserDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("username") val username: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("fullName") val fullName: String? = null,
+    @SerializedName("avatarUrl") val avatarUrl: String? = null,
+    @SerializedName("friendshipStatus") val friendshipStatus: String? = null,
+    @SerializedName("friendshipSenderId") val friendshipSenderId: String? = null
+) {
+    fun toDomain(): User = User(
+        id = id,
+        username = username,
+        email = email,
+        fullName = fullName,
+        avatarUrl = avatarUrl,
+        friendshipStatus = friendshipStatus,
+        friendshipSenderId = friendshipSenderId
+    )
+}

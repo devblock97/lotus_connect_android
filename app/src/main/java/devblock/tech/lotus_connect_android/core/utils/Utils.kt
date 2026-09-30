@@ -1,8 +1,11 @@
 package devblock.tech.lotus_connect_android.core.utils
 
+import android.content.Context
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
+import java.io.File
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -50,4 +53,15 @@ fun toDisplayDate(input: String?): String {
             input
         }
     }
+}
+
+fun copyUriToFile(context: Context, uri: Uri): File {
+    val inputStream = context.contentResolver.openInputStream(uri)
+    val file = File(context.cacheDir, "file_${System.currentTimeMillis()}.jpg")
+    inputStream?.use { input ->
+        file.outputStream().use { output ->
+            input.copyTo(output)
+        }
+    }
+    return file
 }
