@@ -6,6 +6,7 @@ import devblock.tech.lotus_connect_android.feature.contacts.data.service.Contact
 import devblock.tech.lotus_connect_android.feature.home.data.service.FeedService
 import devblock.tech.lotus_connect_android.feature.notifications.data.service.NotificationService
 import devblock.tech.lotus_connect_android.feature.settings.data.service.ProfileService
+import devblock.tech.lotus_connect_android.feature.stories.data.service.StoryService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -65,5 +66,9 @@ object RetrofitClient {
 
     val profileService: ProfileService by lazy {
         retrofit.create(ProfileService::class.java)
+    }
+
+    val storyService: StoryService by lazy {
+        retrofit.create(StoryService::class.java)
     }
 }

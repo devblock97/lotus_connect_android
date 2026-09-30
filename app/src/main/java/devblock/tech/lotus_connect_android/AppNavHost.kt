@@ -95,7 +95,9 @@ fun AppNavHost() {
                     factory = FeedViewModel.Factory
                 )
                 HomeScreen(
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    onNavigateToChat = { navController.navigate(Routes.CONVERSATIONS) },
+                    onNavigateToNotifications = { navController.navigate(Routes.NOTIFICATIONS) }
                 )
             }
             composable(Routes.CONVERSATIONS) {
