@@ -9,5 +9,6 @@ data class AuthUiState(
     val user: User? = null,
     val errorMessage: String? = null,
     val isSuccess: Boolean = false,
+    val isRegisterSuccess: Boolean = false,
     val error: AppException? = null
 )

@@ -41,6 +41,7 @@ class AuthViewModel(
             try {
                 val user = getCachedUserUseCase()
                 if (user != null) {
+                    println("check user email: ${user.email}")
                     _uiState.update {
                         it.copy(user = user, isSuccess = true, isCheckingSession = false)
                     }
@@ -95,7 +96,7 @@ class AuthViewModel(
                         it.copy(
                             isLoading = false,
                             user = user,
-                            isSuccess = true,
+                            isRegisterSuccess = true,
                             errorMessage = null,
                             error = null
                         )
@@ -131,6 +132,10 @@ class AuthViewModel(
 
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null, error = null) }
+    }
+
+    fun clearRegisterSuccess() {
+        _uiState.update { it.copy(isRegisterSuccess = false) }
     }
 
     companion object {

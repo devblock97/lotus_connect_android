@@ -30,12 +30,6 @@ class AuthRepositoryImpl(
 
         val domainUser = response.user.toDomain()
 
-        println("check login method: ${domainUser.avatarUrl}")
-        println("check login method: ${domainUser.username}")
-        println("check login method: ${domainUser.fullName}")
-        println("check login method: ${domainUser.id}")
-        println("check login method: ${domainUser.email}")
-
         localDataSource.saveSession(
             accessToken = response.accessToken,
             refreshToken = response.refreshToken,
