@@ -59,6 +59,7 @@ fun AuthScreen(
     }
 
     var isSignIn by remember { mutableStateOf(true) }
+    var showRegisterSuccessDialog by remember { mutableStateOf(false) }
 
     var fullName by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
@@ -78,6 +79,20 @@ fun AuthScreen(
     var confirmPasswordError by remember { mutableStateOf<String?>(null) }
     var nameError by remember { mutableStateOf<String?>(null) }
     var fullNameError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(uiState.isRegisterSuccess) {
+        if (uiState.isRegisterSuccess) {
+            isSignIn = true
+            password = ""
+            confirmPassword = ""
+            passwordError = null
+            confirmPasswordError = null
+            nameError = null
+            fullNameError = null
+            showRegisterSuccessDialog = true
+            viewModel.clearRegisterSuccess()
+        }
+    }
 
     fun validateAndSubmit() {
         var isValid = true
@@ -357,6 +372,19 @@ fun AuthScreen(
             text = { Text(uiState.errorMessage!!) },
             confirmButton = {
                 TextButton(onClick = { viewModel.clearError() }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+    if (showRegisterSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { showRegisterSuccessDialog = false },
+            title = { Text("Registration Successful") },
+            text = { Text("Your account has been created successfully. Please sign in to continue.") },
+            confirmButton = {
+                TextButton(onClick = { showRegisterSuccessDialog = false }) {
                     Text("OK")
                 }
             }

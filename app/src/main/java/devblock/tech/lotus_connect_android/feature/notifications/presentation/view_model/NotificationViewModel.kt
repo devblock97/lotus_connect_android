@@ -33,6 +33,7 @@ class NotificationViewModel(
     private val _uiState = MutableStateFlow(NotificationsUiState())
     val uiState: StateFlow<NotificationsUiState> = _uiState.asStateFlow()
 
+    private val PAGE_SIZE = 25
     private var loadMoreJob: kotlinx.coroutines.Job? = null
 
     init {
@@ -201,7 +202,10 @@ class NotificationViewModel(
             val result = deleteNotificationUseCase(DeleteNotificationParam(notificationId))
 
             result.onFailure { error ->
-                handleException(error, defaultMessage = "Failed to delete notification") { message, _ ->
+                handleException(
+                    error,
+                    defaultMessage = "Failed to delete notification"
+                ) { message, _ ->
                     _uiState.update { state ->
                         state.copy(
                             notifications = originalList,
@@ -210,7 +214,7 @@ class NotificationViewModel(
                         )
                     }
                 }
-            )
+            }
         }
     }
 
@@ -245,7 +249,6 @@ class NotificationViewModel(
     }
 
     companion object {
-        private const val PAGE_SIZE = 10
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
