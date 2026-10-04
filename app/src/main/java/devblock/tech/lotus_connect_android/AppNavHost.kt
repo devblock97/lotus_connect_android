@@ -136,7 +136,7 @@ fun AppNavHost() {
                     factory = ContactsViewModel.Factory
                 )
                 ContactsScreen(
-                    viewModel = contactsViewModel
+                    viewModel = contactsViewModel,
                 )
             }
             composable(Routes.SETTINGS) {

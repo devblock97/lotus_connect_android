@@ -22,9 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Card
@@ -39,8 +36,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,22 +46,28 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import devblock.tech.lotus_connect_android.core.utils.gradientFor
 import devblock.tech.lotus_connect_android.feature.contacts.domain.entities.Friend
-import kotlin.math.abs
 
 @Composable
 fun ContactCard(
     friend: Friend,
+    onDeleteClick: (Friend) -> Unit = {},
+    onChatClick: (Friend) -> Unit = {},
+    onCallClick: (Friend) -> Unit = {},
+    onVideoClick: (Friend) -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else 1f,
+        targetValue = if (isPressed) 0.98f else 1f,
+        label = "card_scale"
     )
     val gradient = remember(friend.id) { gradientFor(friend.id) }
     var showMenu by remember { mutableStateOf(false) }
@@ -76,7 +79,6 @@ fun ContactCard(
                 scaleX = scale
                 scaleY = scale
             },
-
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -86,7 +88,7 @@ fun ContactCard(
             pressedElevation = 0.dp
         )
     ) {
-        Column() {
+        Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -94,28 +96,39 @@ fun ContactCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(contentAlignment = Alignment.BottomEnd) {
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    colors = gradient,
-                                    start = Offset(0f, 0f),
-                                    end = Offset(150f, 150f)
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = friend.fullName.take(1).uppercase(),
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
+                    if (!friend.avatarUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = friend.avatarUrl,
+                            contentDescription = friend.fullName,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(CircleShape)
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = gradient,
+                                        start = Offset(0f, 0f),
+                                        end = Offset(150f, 150f)
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = friend.fullName.take(1).uppercase(),
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
 
-                    if (friend.friendShipSenderId != null) {
+                    if (friend.friendshipSenderId != null) {
                         Box(
                             modifier = Modifier
                                 .size(16.dp)
@@ -124,39 +137,48 @@ fun ContactCard(
                                 .padding(2.dp)
                                 .clip(CircleShape)
                                 .background(Color(0xFF4ADE80))
-                        ) { }
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.width(14.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = friend.fullName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = friend.email,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = friend.fullName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "@${friend.username}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (friend.email.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = friend.email,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Box {
-                    IconButton(onClick = { showMenu }, modifier = Modifier.size(32.dp)) {
+                    IconButton(
+                        onClick = { showMenu = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.MoreVert,
                             contentDescription = "More options",
@@ -169,12 +191,7 @@ fun ContactCard(
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Edit contact") },
-                            leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null)},
-                            onClick = { showMenu = false}
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Delete", color = MaterialTheme.colorScheme.error)},
+                            text = { Text("Delete friend", color = MaterialTheme.colorScheme.error) },
                             leadingIcon = {
                                 Icon(
                                     Icons.Filled.Delete,
@@ -182,43 +199,46 @@ fun ContactCard(
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             },
-                            onClick = { showMenu = false }
+                            onClick = {
+                                showMenu = false
+                                onDeleteClick(friend)
+                            }
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ActionPill(
                     icon = Icons.Filled.Call,
                     label = "Voice",
                     tint = Color(0xFF34A853),
                     background = Color(0xFF34A853).copy(alpha = 0.12f),
-                    onClick = {},
+                    onClick = { onCallClick(friend) },
                     modifier = Modifier.weight(1f),
                 )
-                Spacer(modifier = Modifier.width(8.dp))
                 ActionPill(
                     icon = Icons.Filled.Videocam,
                     label = "Video",
                     tint = Color(0xFF4285F4),
                     background = Color(0xFF4285F4).copy(alpha = 0.12f),
-                    onClick = {},
+                    onClick = { onVideoClick(friend) },
                     modifier = Modifier.weight(1f)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
                 ActionPill(
                     icon = Icons.AutoMirrored.Filled.Chat,
                     label = "Chat",
                     tint = gradient[0],
                     background = gradient[0].copy(alpha = 0.12f),
-                    onClick = {},
+                    onClick = { onChatClick(friend) },
                     modifier = Modifier.weight(1f)
                 )
             }
