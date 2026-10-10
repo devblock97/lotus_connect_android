@@ -30,7 +30,7 @@ object RetrofitClient {
         tokenProvider?.invoke()
     }
 
-    private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
+    val okHttpClient: OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor(authInterceptor)
         .connectTimeout(15, TimeUnit.SECONDS)
