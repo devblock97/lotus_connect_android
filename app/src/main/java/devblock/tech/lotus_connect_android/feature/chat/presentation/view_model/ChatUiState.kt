@@ -4,6 +4,7 @@ import devblock.tech.lotus_connect_android.feature.chat.domain.entities.MessageE
 
 data class ChatUiState(
     val isLoading: Boolean = false,
+    val isSending: Boolean = false,
     val messages: List<MessageEntity> = emptyList(),
     val errorMessage: String? = null,
     val currentUserId: String? = null,
