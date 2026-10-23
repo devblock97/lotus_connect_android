@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import devblock.tech.lotus_connect_android.feature.auth.presentation.view.AuthScreen
 import devblock.tech.lotus_connect_android.feature.auth.presentation.view_model.AuthViewModel
+import devblock.tech.lotus_connect_android.feature.chat.domain.entities.ConversationEntity
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view.ChatScreen
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view.ConversationListScreen
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.ChatViewModel
@@ -106,8 +107,9 @@ fun AppNavHost() {
                 )
                 ConversationListScreen(
                     viewModel = viewModel,
-                    onConversationClick = { conversationId ->
-                        navController.navigate("chat/$conversationId")
+                    onConversationClick = { conversation ->
+                        navController.currentBackStackEntry?.savedStateHandle?.set("conversation", conversation)
+                        navController.navigate("chat/${conversation.id}")
                     }
                 )
             }
@@ -117,11 +119,21 @@ fun AppNavHost() {
                     navArgument("conversationId") { type = androidx.navigation.NavType.StringType }
                 )
             ) { backStackEntry ->
-                val conversationId = backStackEntry.arguments?.getString("conversationId").orEmpty()
+                val conversation = navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.get<ConversationEntity>("conversation")
                 val viewModel: ChatViewModel = viewModel(
                     factory = ChatViewModel.Factory
                 )
-                ChatScreen(conversationId = conversationId, viewModel = viewModel)
+                ChatScreen(
+                    conversation = conversation,
+                    viewModel = viewModel,
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onCallClick = {},
+                    onVideoCallClick = {}
+                )
             }
             composable(Routes.NOTIFICATIONS) {
                 val notificationViewModel: NotificationViewModel = viewModel(

@@ -29,6 +29,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +56,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ConversationListScreen(
     viewModel: ConversationListViewModel,
-    onConversationClick: (String) -> Unit
+    onConversationClick: (ConversationEntity) -> Unit
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
@@ -79,7 +81,7 @@ fun ConversationListScreen(
                     ConversationCard(
                         conversation = conversation,
                         onClick = {
-                            onConversationClick(conversation.id)
+                            onConversationClick(conversation)
                         }
                     )
                 }
@@ -120,23 +122,34 @@ private fun ConversationCard(
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.linearGradient(
-                        colors = gradient,
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = conversation.title.take(1).uppercase(),
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+        if (!conversation.avatarUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = conversation.avatarUrl,
+                contentDescription = conversation.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
             )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            colors = gradient,
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = conversation.title.take(1).uppercase(),
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         Spacer(modifier = Modifier.size(12.dp))
