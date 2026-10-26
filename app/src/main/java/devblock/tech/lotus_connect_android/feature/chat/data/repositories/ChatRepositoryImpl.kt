@@ -23,6 +23,18 @@ class ChatRepositoryImpl(
         }
     }
 
+    override fun observeTypingStatus(conversationId: String): Flow<Boolean> {
+        return chatWebSocketDataSource.observeTyping(conversationId)
+    }
+
+    override fun sendTypingStatus(
+        recipientId: String,
+        conversationId: String,
+        isTyping: Boolean
+    ): Boolean {
+        return chatWebSocketDataSource.sendTyping(recipientId, conversationId, isTyping)
+    }
+
     override fun observeIncomingMessages(conversationId: String): Flow<MessageEntity> {
         val token = authLocalDataSource.getAccessToken()
         return chatWebSocketDataSource.connect(conversationId, token)

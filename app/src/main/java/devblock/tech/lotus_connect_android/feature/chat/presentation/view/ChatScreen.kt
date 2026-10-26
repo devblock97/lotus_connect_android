@@ -72,6 +72,7 @@ import devblock.tech.lotus_connect_android.core.utils.toDisplayDate
 import devblock.tech.lotus_connect_android.feature.chat.domain.entities.ConversationEntity
 import devblock.tech.lotus_connect_android.feature.chat.domain.entities.MessageEntity
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.ChatViewModel
+import devblock.tech.lotus_connect_android.feature.chat.presentation.widgets.TypingIndicatorBubble
 import java.time.Instant
 import java.time.Duration
 import java.time.LocalDate
@@ -119,7 +120,7 @@ fun ChatScreen(
         // Top Header
         MessengerTopBar(
             title = conversation?.title ?: "",
-            subtitle = "online",
+            subTitle = "online",
             avatarUrl = null,
             onBackClick = onBackClick,
             onCallClick = onCallClick,
@@ -226,6 +227,11 @@ fun ChatScreen(
             }
         }
 
+        // Peer typing animated bubble appears at the bottom of messages
+        if (uiState.isPeerTyping) {
+            TypingIndicatorBubble(peerName = conversation?.title)
+        }
+
         // Message Input Bar
         Surface(
             tonalElevation = 2.dp,
@@ -239,7 +245,10 @@ fun ChatScreen(
             ) {
                 OutlinedTextField(
                     value = textInput,
-                    onValueChange = { textInput = it },
+                    onValueChange = {
+                        textInput = it
+                        viewModel.onTextInputChanged(it, conversation?.peerId)
+                    },
                     placeholder = { Text("Type a message...") },
                     modifier = Modifier.weight(1f),
                     maxLines = 4,
@@ -309,7 +318,7 @@ private fun formatMessageTimestamp(createdAt: String?): String {
                 "Yesterday ${zoneDateTime.format(timePattern)}"
             }
             else -> {
-                zoneDateTime.format(DateTimeFormatter.ofPattern("MM d, HH:mm"))
+                zoneDateTime.format(DateTimeFormatter.ofPattern("MMM d, HH:mm"))
             }
         }
     } catch (_: Exception) {
@@ -333,7 +342,7 @@ private fun  shouldShowTimestamp(prevIso: String?, currentIso: String?): Boolean
 @Composable
 private fun MessengerTopBar(
     title: String,
-    subtitle: String,
+    subTitle: String,
     avatarUrl: String?,
     onBackClick: () -> Unit,
     onCallClick: () -> Unit,
@@ -399,7 +408,7 @@ private fun MessengerTopBar(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = subtitle,
+                text = subTitle,
                 color = AppColor.MessengerMutedText,
                 fontSize = 12.sp,
                 maxLines = 1

@@ -4,9 +4,13 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import devblock.tech.lotus_connect_android.feature.chat.domain.entities.MessageEntity
+import devblock.tech.lotus_connect_android.feature.chat.domain.entities.PeerTypingEvent
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -16,6 +20,8 @@ import java.util.concurrent.TimeUnit
 
 interface ChatWebSocketDataSource {
     fun connect(conversationId: String, token: String?): Flow<MessageEntity>
+    fun observeTyping(conversationId: String): Flow<Boolean>
+    fun sendTyping(recipientId: String, conversationId: String, isTyping: Boolean): Boolean
     fun sendMessage(content: String): Boolean
     fun disconnect()
 }
@@ -27,6 +33,7 @@ class ChatWebSocketDataSourceImpl(
 
     private var webSocket: WebSocket? = null
     private val tag = "ChatWebSocket"
+    private val _typingEvents = MutableSharedFlow<PeerTypingEvent>(extraBufferCapacity = 64)
 
     override fun connect(
         conversationId: String,
@@ -70,28 +77,32 @@ class ChatWebSocketDataSourceImpl(
                         val jsonObject = jsonElement.asJsonObject
                         val event = jsonObject.get("event")?.asString
 
-                        // Handle chat:message event from gateway
-                        if (event == "chat:message") {
-                            val payload = jsonObject.get("payload")
-                            if (payload != null && payload.isJsonObject) {
-                                val payloadObj = payload.asJsonObject
-                                val msgConvId = payloadObj.get("conversation_id")?.asString
-                                    ?: payloadObj.get("conversationId")?.asString
+                        when (event) {
+                            "chat:message" -> {
+                                val payload = jsonObject.getAsJsonObject("payload") ?: return
+                                val msgConvId = payload.get("conversation_id")?.asString
+                                    ?: payload.get("conversationId")?.asString
 
-                                // Only emit if it matches current conversation or no conversationId restriction
                                 if (msgConvId == null || msgConvId == conversationId) {
-                                    val message = gson.fromJson(payloadObj, MessageEntity::class.java)
+                                    val message = gson.fromJson(payload, MessageEntity::class.java)
                                     if (message != null && message.id.isNotBlank()) {
-                                        Log.d(tag, "Emitting received message: ${message.id} -> ${message.content}")
                                         trySend(message)
                                     }
                                 }
                             }
-                        } else if (jsonObject.has("id") && jsonObject.has("content")) {
-                            // Direct MessageEntity format fallback
-                            val message = gson.fromJson(jsonObject, MessageEntity::class.java)
-                            if (message != null && message.id.isNotBlank()) {
-                                trySend(message)
+                            "typing" -> {
+                                val payload = jsonObject.getAsJsonObject("payload") ?: return
+                                val senderId = payload.get("senderId")?.asString ?: ""
+                                val msgConvId = payload.get("conversationId")?.asString ?: conversationId
+                                val isTyping = payload.get("isTyping")?.asBoolean ?: false
+
+                                _typingEvents.tryEmit(
+                                    PeerTypingEvent(
+                                        conversationId = msgConvId,
+                                        senderId = senderId,
+                                        isTyping = isTyping
+                                    )
+                                )
                             }
                         }
                     }
@@ -125,6 +136,32 @@ class ChatWebSocketDataSourceImpl(
             webSocket?.close(1000, "Screen closed")
             webSocket = null
         }
+    }
+
+    override fun observeTyping(conversationId: String): Flow<Boolean> {
+        return _typingEvents
+            .filter { it.conversationId == conversationId }
+            .map { it.isTyping }
+    }
+
+    override fun sendTyping(
+        recipientId: String,
+        conversationId: String,
+        isTyping: Boolean
+    ): Boolean {
+        if (webSocket == null || recipientId.isBlank()) return false
+
+        val envelop = mapOf(
+            "event" to "typing",
+            "payload" to mapOf(
+                "recipientId" to recipientId,
+                "conversationId" to conversationId,
+                "isTyping" to isTyping
+            )
+        )
+
+        val json = gson.toJson(envelop)
+        return sendMessage(json)
     }
 
     override fun sendMessage(content: String): Boolean {
