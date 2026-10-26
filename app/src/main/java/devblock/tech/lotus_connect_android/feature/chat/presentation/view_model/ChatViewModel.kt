@@ -23,6 +23,8 @@ import devblock.tech.lotus_connect_android.core.view_model.BaseViewModel
 import devblock.tech.lotus_connect_android.feature.chat.data.datasources.ChatWebSocketDataSource
 import devblock.tech.lotus_connect_android.feature.chat.data.datasources.ChatWebSocketDataSourceImpl
 import devblock.tech.lotus_connect_android.feature.chat.domain.usecase.ObserveIncomingMessageUseCase
+import devblock.tech.lotus_connect_android.feature.chat.domain.usecase.ObserveTypingStatusUseCase
+import devblock.tech.lotus_connect_android.feature.chat.domain.usecase.SendTypingStatusUseCase
 import devblock.tech.lotus_connect_android.feature.chat.domain.usecase.SendWebSocketMessageUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -36,6 +38,8 @@ class ChatViewModel(
     private val getMessagesHistoryUseCase: GetMessagesHistoryUseCase,
     private val observeIncomingMessageUseCase: ObserveIncomingMessageUseCase,
     private val sendWebSocketMessageUseCase: SendWebSocketMessageUseCase,
+    private val observeTypingStatusUseCase: ObserveTypingStatusUseCase,
+    private val sendTypingStatusUseCase: SendTypingStatusUseCase,
     currentUserId: String?
 ): BaseViewModel() {
 
@@ -44,14 +48,72 @@ class ChatViewModel(
     val uiState = _uiState.asStateFlow()
 
     private var realtimeJob: Job? = null
+    private var typingObserverJob: Job? = null
+    private var peerTypingResetJob: Job? = null
+    private var outboundTypingTimerJob: Job? = null
+    private var isCurrentlyTypingSent = false
+    private var cachedRecipientId: String? = null
     private val gson = Gson()
 
     init {
         _uiState.update { it.copy(currentUserId = currentUserId) }
         getMessages(conversationId)
         observeRealtimeMessages(conversationId)
+        observePeerTyping(conversationId)
     }
 
+    private fun observePeerTyping(conversationId: String) {
+        typingObserverJob?.cancel()
+        typingObserverJob = viewModelScope.launch {
+            observeTypingStatusUseCase(conversationId)
+                .catch {  }
+                .collect { isTyping ->
+                    peerTypingResetJob?.cancel()
+                    _uiState.update { it.copy(isPeerTyping = isTyping) }
+
+                    // Failsafe: if peer disconnects without sending isTyping=false, auto-clear after 5s
+                    if (isTyping) {
+                        peerTypingResetJob = viewModelScope.launch {
+                            delay(5000.milliseconds)
+                            _uiState.update { it.copy(isPeerTyping = false) }
+                        }
+                    }
+                }
+        }
+    }
+
+    fun onTextInputChanged(newText: String, recipientId: String?) {
+        if (!recipientId.isNullOrBlank()) {
+            cachedRecipientId = recipientId
+        }
+
+        val targetPeerId = recipientId ?: cachedRecipientId ?: return
+
+        if (newText.isNotBlank()) {
+            if (!isCurrentlyTypingSent) {
+                isCurrentlyTypingSent = true
+                sendTypingStatusUseCase(targetPeerId, conversationId, true)
+            }
+
+            // Reset inactivity timer: stops typing indicator 3s after user stops pressing keys
+            outboundTypingTimerJob?.cancel()
+            outboundTypingTimerJob = viewModelScope.launch {
+                delay(3000.milliseconds)
+                isCurrentlyTypingSent = false
+                sendTypingStatusUseCase(targetPeerId, conversationId, false)
+            }
+        } else {
+            stopTypingImmediately(targetPeerId)
+        }
+    }
+
+    private fun stopTypingImmediately(recipientId: String) {
+        outboundTypingTimerJob?.cancel()
+        if (isCurrentlyTypingSent) {
+            isCurrentlyTypingSent = false
+            sendTypingStatusUseCase(recipientId, conversationId, false)
+        }
+    }
     private fun getMessages(conversationId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -223,12 +285,16 @@ class ChatViewModel(
                 )
                 val observeIncomingMessageUseCase = ObserveIncomingMessageUseCase(repository = repository)
                 val sendWebSocketMessageUseCase = SendWebSocketMessageUseCase(repository = repository)
+                val observeTypingStatusUseCase = ObserveTypingStatusUseCase(repository = repository)
+                val sendTypingStatusUseCase = SendTypingStatusUseCase(repository = repository)
 
                 return ChatViewModel(
                     savedStateHandle = savedStateHandle,
                     getMessagesHistoryUseCase = getMessagesHistoryUseCase,
                     observeIncomingMessageUseCase = observeIncomingMessageUseCase,
                     sendWebSocketMessageUseCase = sendWebSocketMessageUseCase,
+                    observeTypingStatusUseCase = observeTypingStatusUseCase,
+                    sendTypingStatusUseCase = sendTypingStatusUseCase,
                     currentUserId = currentUserId
                 ) as T
             }
