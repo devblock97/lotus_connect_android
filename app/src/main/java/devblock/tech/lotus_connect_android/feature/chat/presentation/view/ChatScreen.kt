@@ -1,8 +1,11 @@
 package devblock.tech.lotus_connect_android.feature.chat.presentation.view
 
+import android.app.Dialog
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,17 +14,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -29,13 +29,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,7 +41,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,26 +51,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import devblock.tech.lotus_connect_android.core.theme.AppColor
-import devblock.tech.lotus_connect_android.core.utils.gradientFor
-import devblock.tech.lotus_connect_android.core.utils.toDisplayDate
+import devblock.tech.lotus_connect_android.core.utils.resolveMediaUrl
 import devblock.tech.lotus_connect_android.feature.chat.domain.entities.ConversationEntity
-import devblock.tech.lotus_connect_android.feature.chat.domain.entities.MessageEntity
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.ChatViewModel
+import devblock.tech.lotus_connect_android.feature.chat.presentation.widgets.BubbleMessage
+import devblock.tech.lotus_connect_android.feature.chat.presentation.widgets.ChatTimestampHeader
+import devblock.tech.lotus_connect_android.feature.chat.presentation.widgets.FullScreenMediaViewer
+import devblock.tech.lotus_connect_android.feature.chat.presentation.widgets.MessengerTopBar
 import devblock.tech.lotus_connect_android.feature.chat.presentation.widgets.TypingIndicatorBubble
 import java.time.Instant
-import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -108,6 +104,9 @@ fun ChatScreen(
             textInput = ""
         }
     }
+
+    var selectedMediaUrl by remember { mutableStateOf<String?>(null) }
+    var fullScreenViewerData by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
 
     Column(
         modifier = modifier
@@ -207,6 +206,7 @@ fun ChatScreen(
                             val currentUserId = uiState.currentUserId ?: ""
                             val prevMessage = uiState.messages.getOrNull(index - 1)
                             val nextMessage = uiState.messages.getOrNull(index + 1)
+                            val mediaLists = message.mediaItems.map { it.url }
 
                             // Show timestamp at top or if more than 20 minutes between messages
                             val showTimestamp = prevMessage == null || shouldShowTimestamp(prevMessage.createdAt, message.createdAt)
@@ -219,8 +219,31 @@ fun ChatScreen(
                             BubbleMessage(
                                 message = message,
                                 userId = uiState.currentUserId ?: "",
-                                isLastInGroup = isLastInGroup
+                                isLastInGroup = isLastInGroup,
+                                onImageClick = { clickedIndex, allUrls ->
+                                    fullScreenViewerData = Pair(mediaLists, clickedIndex)
+                                }
                             )
+
+                            if (selectedMediaUrl != null) {
+                                androidx.compose.ui.window.Dialog(
+                                    onDismissRequest = { selectedMediaUrl = null }
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clickable { selectedMediaUrl = null },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        AsyncImage(
+                                            model = selectedMediaUrl,
+                                            contentDescription = "Full preview",
+                                            contentScale = ContentScale.Fit,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -291,6 +314,14 @@ fun ChatScreen(
             }
         }
     }
+
+    fullScreenViewerData?.let { (urls, index) ->
+        FullScreenMediaViewer(
+            mediaUrls = urls,
+            initialIndex = index,
+            onDismiss = { fullScreenViewerData = null }
+        )
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -337,239 +368,4 @@ private fun  shouldShowTimestamp(prevIso: String?, currentIso: String?): Boolean
     } catch (_: Exception) {
         false
     }
-}
-
-@Composable
-private fun MessengerTopBar(
-    title: String,
-    subTitle: String,
-    avatarUrl: String?,
-    onBackClick: () -> Unit,
-    onCallClick: () -> Unit,
-    onVideoCallClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Back chevron
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier.size(36.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBackIos,
-                contentDescription = "Back",
-                tint = AppColor.MessengerBlue,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-        // Recipient Avatar
-        Box(
-            modifier = Modifier
-                .size(38.dp)
-                .clip(CircleShape)
-                .background(Brush.linearGradient(gradientFor(title))),
-            contentAlignment = Alignment.Center
-        ) {
-            if (!avatarUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = avatarUrl,
-                    contentDescription = title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Text(
-                    text = title.take(1).uppercase(),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        // Name & Status column
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = title,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 17.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = subTitle,
-                color = AppColor.MessengerMutedText,
-                fontSize = 12.sp,
-                maxLines = 1
-            )
-        }
-
-        // Call Action
-        IconButton(
-            onClick = onCallClick,
-            modifier = Modifier.size(40.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Call,
-                contentDescription = "Audio Call",
-                tint = AppColor.MessengerBlue,
-                modifier = Modifier.size(22.dp)
-            )
-        }
-
-        // Video Call Action
-        IconButton(
-            onClick = onVideoCallClick,
-            modifier = Modifier.size(40.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Videocam,
-                contentDescription = "Video Call",
-                tint = AppColor.MessengerBlue,
-                modifier = Modifier.size(26.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun ChatTimestampHeader(timestamp: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = timestamp,
-            color = AppColor.MessengerMutedText,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium
-        )
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun BubbleMessage(
-    message: MessageEntity,
-    userId: String,
-    isLastInGroup: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val date = remember(message.createdAt) {
-        toDisplayDate(message.createdAt)
-    }
-    val isMe = message.senderId == userId
-    val isPending = message.id.startsWith("temp_")
-
-    // Extract text & any image URLs if present
-    val (cleanText, imageUrls) = remember (message.content) {
-        parseMessageContent(message.content)
-    }
-
-    val backgroundColor = if (isMe) {
-        if (isPending) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-        else MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
-
-    val textColor = if (isMe) {
-        MaterialTheme.colorScheme.onPrimary
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    val alignment = if (isMe) Alignment.CenterEnd else Alignment.CenterStart
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 2.dp),
-        horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start,
-        verticalAlignment = Alignment.Bottom
-    ) {
-        Column(
-            horizontalAlignment = if (isMe) Alignment.End else Alignment.Start,
-            modifier = Modifier.widthIn(max = 280.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentSize(alignment)
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = 14.dp,
-                            topEnd = 14.dp,
-                            bottomStart = if (isMe) 14.dp else 2.dp,
-                            bottomEnd = if (isMe) 2.dp else 14.dp
-                        )
-                    )
-                    .background(backgroundColor)
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = message.content,
-                    color = textColor,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            ) {
-                Text(
-                    text = date,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                    fontSize = 10.sp
-                )
-
-                if (isPending) {
-                    Spacer(modifier = Modifier.width(3.dp))
-                    Icon(
-                        imageVector = Icons.Default.Schedule,
-                        contentDescription = "Sending...",
-                        modifier = Modifier.size(10.dp),
-                        tint = MaterialTheme.colorScheme.outline
-                    )
-                }
-            }
-        }
-    }
-}
-
-private fun parseMessageContent(content: String): Pair<String, List<String>> {
-    val trimmed = content.trim()
-    val urlRegex = Regex("""https?://\S+""", RegexOption.IGNORE_CASE)
-    val matches = urlRegex.findAll(trimmed).map { it.value }.toList()
-    val imageUrls = matches.filter { url ->
-        url.contains(".jpg", ignoreCase = true) ||
-                url.contains(".jpeg", ignoreCase = true) ||
-                url.contains(".png", ignoreCase = true) ||
-                url.contains(".webp", ignoreCase = true) ||
-                url.contains("/images/", ignoreCase = true) ||
-                url.contains("images.unsplash.com", ignoreCase = true)
-    }
-    var cleanText = trimmed
-    imageUrls.forEach { url ->
-        cleanText = cleanText.replace(url, "").trim()
-    }
-
-    return Pair(cleanText, imageUrls)
 }

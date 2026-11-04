@@ -156,7 +156,6 @@ fun PostCard(
                     )
                 }
 
-                // 1/4 page count badge in top right
                 if (mediaItems.size > 1) {
                     Box(
                         modifier = Modifier

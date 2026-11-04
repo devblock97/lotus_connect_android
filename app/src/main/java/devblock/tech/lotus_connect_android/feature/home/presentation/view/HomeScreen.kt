@@ -1,4 +1,4 @@
-package devblock.tech.lotus_connect_android.feature.home.presentation
+package devblock.tech.lotus_connect_android.feature.home.presentation.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -43,9 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import devblock.tech.lotus_connect_android.feature.home.domain.entities.Author
-import devblock.tech.lotus_connect_android.feature.home.domain.entities.MediaEntity
-import devblock.tech.lotus_connect_android.feature.home.domain.entities.PostEntity
 import devblock.tech.lotus_connect_android.feature.home.presentation.view_model.FeedViewModel
 import devblock.tech.lotus_connect_android.feature.home.presentation.widget.PostCard
 import devblock.tech.lotus_connect_android.feature.stories.data.dto.StoryDto

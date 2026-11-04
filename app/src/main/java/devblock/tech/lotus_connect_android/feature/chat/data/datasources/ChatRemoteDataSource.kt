@@ -1,5 +1,6 @@
 package devblock.tech.lotus_connect_android.feature.chat.data.datasources
 
+import android.util.Log
 import devblock.tech.lotus_connect_android.feature.chat.data.service.ChatService
 import devblock.tech.lotus_connect_android.feature.chat.domain.entities.MessageEntity
 
@@ -18,6 +19,7 @@ class ChatRemoteDataSourceImpl(
         val response = chatService.getMessagesHistory(conversationId)
 
         if (response.isSuccessful && response.body() != null) {
+            Log.d("get message history", "check chat remote message: ${response.body()}")
             return response.body()!!
         } else {
             throw Exception("Failed to load messages history with HTTP error: ${response.errorBody()?.string()}")

@@ -28,7 +28,7 @@ import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.
 import devblock.tech.lotus_connect_android.feature.chat.presentation.view_model.ConversationListViewModel
 import devblock.tech.lotus_connect_android.feature.contacts.presentation.view.ContactsScreen
 import devblock.tech.lotus_connect_android.feature.contacts.presentation.view_model.ContactsViewModel
-import devblock.tech.lotus_connect_android.feature.home.presentation.HomeScreen
+import devblock.tech.lotus_connect_android.feature.home.presentation.view.HomeScreen
 import devblock.tech.lotus_connect_android.feature.home.presentation.view_model.FeedViewModel
 import devblock.tech.lotus_connect_android.feature.notifications.presentation.view.NotificationsScreen
 import devblock.tech.lotus_connect_android.feature.notifications.presentation.view_model.NotificationViewModel
