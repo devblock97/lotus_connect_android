@@ -83,6 +83,7 @@ class ChatWebSocketDataSourceImpl(
                                 val msgConvId = payload.get("conversation_id")?.asString
                                     ?: payload.get("conversationId")?.asString
 
+                                println("check web socket message payload: $payload")
                                 if (msgConvId == null || msgConvId == conversationId) {
                                     val message = gson.fromJson(payload, MessageEntity::class.java)
                                     if (message != null && message.id.isNotBlank()) {

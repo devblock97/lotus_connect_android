@@ -65,3 +65,19 @@ fun copyUriToFile(context: Context, uri: Uri): File {
     }
     return file
 }
+
+fun resolveMediaUrl(rawUrl: String?): String? {
+    if (rawUrl.isNullOrBlank()) return null
+    var url = rawUrl.trim()
+
+    // If backend returns relative path: "/uploads/img.jpg"
+    if (url.startsWith("/")) {
+        url = "http://10.0.2.2:8080$url"
+    }
+
+    // If backend returns localhost or 127.0.0.1, rewrite to 10.0.2.2 for emulator
+    return url
+        .replace("http://localhost:8443", "http://10.0.2.2:8080")
+        .replace("http://127.0.0.1:8443", "http://10.0.2.2:8080")
+        .replace("https://localhost:8443", "http://10.0.2.2:8080")
+}
